@@ -1,5 +1,6 @@
 package com.smsguard.ui
 
+import android.content.ComponentName
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.layout.*
@@ -16,9 +17,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.smsguard.rules.RuleLoader
@@ -27,11 +32,25 @@ import com.smsguard.update.RuleUpdateWorker
 @Composable
 fun SetupScreen() {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val ruleLoader = remember { RuleLoader(context) }
     val currentRules = remember { ruleLoader.loadCurrent() }
     
     var isNotificationEnabled by remember { 
         mutableStateOf(isNotificationServiceEnabled(context)) 
+    }
+
+    // Refresh status when returning to the app
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                isNotificationEnabled = isNotificationServiceEnabled(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     Column(
@@ -49,38 +68,74 @@ fun SetupScreen() {
             color = MaterialTheme.colorScheme.primary
         )
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = if (isNotificationEnabled) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
-            )
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+        if (!isNotificationEnabled) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFC62828)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     Icon(
-                        imageVector = if (isNotificationEnabled) Icons.Default.CheckCircle else Icons.Default.Error,
+                        imageVector = Icons.Default.Error,
                         contentDescription = null,
-                        tint = if (isNotificationEnabled) Color(0xFF2E7D32) else Color(0xFFC62828)
+                        tint = Color.White,
+                        modifier = Modifier.size(48.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (isNotificationEnabled) "Protection Active" else "Protection Disabled",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp
-                    )
-                }
-                
-                if (!isNotificationEnabled) {
                     Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "PROTECTION IS OFF",
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Black
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "SMSGuard needs notification access to protect you from malicious links.",
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        fontSize = 16.sp
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
                     Button(
                         onClick = {
                             context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC62828))
+                        modifier = Modifier.fillMaxWidth().height(64.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = Color(0xFFC62828)
+                        ),
+                        shape = MaterialTheme.shapes.medium
                     ) {
-                        Text("Enable Notification Access", fontSize = 18.sp)
+                        Text("ENABLE PROTECTION NOW", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     }
+                }
+            }
+        } else {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9))
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = Color(0xFF2E7D32),
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Protection is Active",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        color = Color(0xFF2E7D32)
+                    )
                 }
             }
         }
@@ -126,5 +181,14 @@ fun SetupScreen() {
 private fun isNotificationServiceEnabled(context: android.content.Context): Boolean {
     val pkgName = context.packageName
     val flat = Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners")
-    return flat?.contains(pkgName) == true
+    if (!flat.isNullOrEmpty()) {
+        val names = flat.split(":")
+        for (name in names) {
+            val cn = ComponentName.unflattenFromString(name)
+            if (cn != null && pkgName == cn.packageName) {
+                return true
+            }
+        }
+    }
+    return false
 }
