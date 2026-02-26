@@ -1,0 +1,68 @@
+{
+ "version": 1,
+ "publishedAt": "2026-01-01T00:00:00Z",
+ "shorteners": [
+  "bit.ly",
+  "tinyurl.com",
+  "t.co",
+  "cutt.ly",
+  "is.gd",
+  "buff.ly",
+  "ow.ly"
+ ],
+ "suspiciousTlds": [
+  ".xyz",
+  ".top",
+  ".click",
+  ".online",
+  ".icu",
+  ".live",
+  ".link",
+  ".info",
+  ".biz"
+ ],
+ "triggerWordsPt": [
+  "ctt",
+  "entrega",
+  "taxa",
+  "desalfandegamento",
+  "mbway",
+  "multibanco",
+  "conta bloqueada",
+  "urgente",
+  "vencido",
+  "atraso",
+  "reembolso"
+ ],
+ "brandKeywordsPt": [
+  "ctt",
+  "mbway",
+  "santander",
+  "cgd",
+  "millennium",
+  "revolut",
+  "finanças",
+  "segurança social",
+  "bpi",
+  "novo banco"
+ ],
+ "allowlistDomains": [
+  "google.com",
+  "microsoft.com",
+  "apple.com",
+  "facebook.com",
+  "instagram.com",
+  "whatsapp.com",
+  "amazon.com",
+  "netflix.com"
+ ],
+ "weights": {
+  "shortener": 40,
+  "suspiciousTld": 30,
+  "punycode": 25,
+  "triggerWords": 20,
+  "brandImpersonation": 20,
+  "weirdStructure": 15,
+  "allowlist": -20
+ }
+}

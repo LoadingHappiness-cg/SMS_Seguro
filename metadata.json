@@ -1,0 +1,5 @@
+{
+  "name": "SMSGuard",
+  "description": "Privacy-first Android application that detects smishing links in SMS notifications locally.",
+  "requestFramePermissions": []
+}
