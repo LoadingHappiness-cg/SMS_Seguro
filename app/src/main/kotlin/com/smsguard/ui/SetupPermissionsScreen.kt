@@ -68,8 +68,10 @@ fun SetupPermissionsScreen(
     val notificationsEnabled = remember { mutableStateOf(false) }
     val hasListener = remember { mutableStateOf(false) }
     val isIgnoringBatteryOptimizations = remember { mutableStateOf(true) }
+    val hasReceiveSmsPermission = remember { mutableStateOf(false) }
 
     val showNotificationsDeniedMsg = remember { mutableStateOf(false) }
+    val showReceiveSmsDeniedMsg = remember { mutableStateOf(false) }
 
     fun refresh() {
         val health = PermissionHealth(context)
@@ -77,11 +79,18 @@ fun SetupPermissionsScreen(
         notificationsEnabled.value = health.notificationsEnabled
         hasListener.value = health.hasNotificationListenerAccess
         isIgnoringBatteryOptimizations.value = health.isIgnoringBatteryOptimizations
+        hasReceiveSmsPermission.value = health.hasReceiveSmsPermission
     }
 
     val requestNotificationsPermission =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             showNotificationsDeniedMsg.value = !granted
+            refresh()
+        }
+
+    val requestReceiveSmsPermission =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            showReceiveSmsDeniedMsg.value = !granted
             refresh()
         }
 
@@ -111,6 +120,7 @@ fun SetupPermissionsScreen(
         step3Ok = isIgnoringBatteryOptimizations.value,
         showXiaomiAutoStart = isXiaomi,
         showNotificationsDeniedMsg = showNotificationsDeniedMsg,
+        showReceiveSmsDeniedMsg = showReceiveSmsDeniedMsg,
         onNotificationsClick = {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && needsPostNotifications.value) {
                 requestNotificationsPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -122,6 +132,10 @@ fun SetupPermissionsScreen(
         },
         onListenerClick = {
             context.openIntentSafely(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+        },
+        stepSmsOk = hasReceiveSmsPermission.value,
+        onReceiveSmsClick = {
+            requestReceiveSmsPermission.launch(Manifest.permission.RECEIVE_SMS)
         },
         onBatteryClick = {
             context.openBatteryHelp()
@@ -144,11 +158,14 @@ fun SetupPermissionsScreen(
 private fun SetupPermissionsScaffold(
     step1Ok: Boolean,
     step2Ok: Boolean,
+    stepSmsOk: Boolean,
     step3Ok: Boolean,
     showXiaomiAutoStart: Boolean,
     showNotificationsDeniedMsg: MutableState<Boolean>,
+    showReceiveSmsDeniedMsg: MutableState<Boolean>,
     onNotificationsClick: () -> Unit,
     onListenerClick: () -> Unit,
+    onReceiveSmsClick: () -> Unit,
     onBatteryClick: () -> Unit,
     onXiaomiAutoStartClick: () -> Unit,
     onOpenSettingsClick: () -> Unit,
@@ -231,6 +248,23 @@ private fun SetupPermissionsScaffold(
                 icon = Icons.Default.Shield,
                 onClick = onListenerClick,
             )
+
+            PermissionStepCard(
+                title = stringResource(R.string.step_sms_fallback),
+                ok = stepSmsOk,
+                buttonText = stringResource(R.string.allow_sms_fallback),
+                icon = Icons.Default.Notifications,
+                onClick = onReceiveSmsClick,
+            )
+
+            if (showReceiveSmsDeniedMsg.value) {
+                Text(
+                    text = stringResource(R.string.sms_fallback_denied_msg),
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
 
             PermissionStepCard(
                 title = stringResource(R.string.step_battery),

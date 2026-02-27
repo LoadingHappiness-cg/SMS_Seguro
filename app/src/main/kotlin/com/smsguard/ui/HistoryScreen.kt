@@ -1,5 +1,7 @@
 package com.smsguard.ui
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -47,14 +49,20 @@ fun HistoryScreen() {
                 )
             }
             items(events) { event ->
-                HistoryItem(event)
+                HistoryItem(
+                    event = event,
+                    onOpenDetails = { openAlertFromHistory(context, event) },
+                )
             }
         }
     }
 }
 
 @Composable
-fun HistoryItem(event: HistoryEvent) {
+fun HistoryItem(
+    event: HistoryEvent,
+    onOpenDetails: () -> Unit,
+) {
     val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
     val date = sdf.format(Date(event.timestamp))
 
@@ -73,6 +81,7 @@ fun HistoryItem(event: HistoryEvent) {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
+        onClick = onOpenDetails,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -130,4 +139,21 @@ fun HistoryItem(event: HistoryEvent) {
             Text(text = date, fontSize = 14.sp, color = Color.Gray)
         }
     }
+}
+
+private fun openAlertFromHistory(context: Context, event: HistoryEvent) {
+    val intent =
+        Intent(context, AlertActivity::class.java).apply {
+            putExtra("sender", event.sender)
+            putExtra("domain", event.domain)
+            putExtra("url", event.url.orEmpty())
+            putExtra("score", event.score)
+            putExtra("level", event.riskLevel.name)
+            putExtra("alert_type", event.alertType.name)
+            putStringArrayListExtra("reasons", ArrayList(event.reasons))
+            putExtra("mb_entidade", event.multibancoEntidade.orEmpty())
+            putExtra("mb_referencia", event.multibancoReferencia.orEmpty())
+            putExtra("mb_valor", event.multibancoValor)
+        }
+    context.startActivity(intent)
 }

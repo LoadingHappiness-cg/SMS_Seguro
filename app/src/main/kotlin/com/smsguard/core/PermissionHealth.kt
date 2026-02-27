@@ -23,6 +23,12 @@ class PermissionHealth(
     val notificationsEnabled: Boolean
         get() = NotificationManagerCompat.from(context).areNotificationsEnabled()
 
+    val hasReceiveSmsPermission: Boolean
+        get() = ContextCompat.checkSelfPermission(
+            context,
+            android.Manifest.permission.RECEIVE_SMS,
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
     val hasNotificationListenerAccess: Boolean
         get() {
             val flat =
