@@ -25,12 +25,19 @@ object UrlExtractor {
     }
 
     fun getDomain(url: String): String {
-        return try {
-            val uri = java.net.URI(url)
-            val domain = uri.host ?: ""
-            domain.removePrefix("www.")
-        } catch (e: Exception) {
-            ""
-        }
+        val domainFromUri =
+            runCatching {
+                java.net.URI(url).host
+            }.getOrNull()
+
+        val domainFromUrl =
+            if (domainFromUri.isNullOrBlank()) {
+                runCatching { java.net.URL(url).host }.getOrNull()
+            } else {
+                null
+            }
+
+        val domain = (domainFromUri ?: domainFromUrl).orEmpty()
+        return domain.removePrefix("www.")
     }
 }

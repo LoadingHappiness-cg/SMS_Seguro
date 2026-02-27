@@ -131,4 +131,34 @@ class RiskEngineTest {
         assertEquals(RiskLevel.LOW, result.level)
         assertEquals(0, result.score)
     }
+
+    @Test
+    fun dataRequestOnly_isNeverLow() {
+        val engine = RiskEngine(ruleSet)
+
+        val result =
+            engine.analyze(
+                messageText = "Envie o código SMS para concluir a verificação.",
+                urls = emptyList(),
+                multibancoData = null,
+            )
+
+        assertTrue(result.level == RiskLevel.MEDIUM || result.level == RiskLevel.HIGH)
+        assertTrue(result.reasons.contains("keyword_dataRequest"))
+    }
+
+    @Test
+    fun cyrillicHostname_isNeverLow() {
+        val engine = RiskEngine(ruleSet)
+
+        val result =
+            engine.analyze(
+                messageText = "Valide aqui: https://раypal.com",
+                urls = listOf("https://раypal.com"),
+                multibancoData = null,
+            )
+
+        assertTrue(result.level == RiskLevel.MEDIUM || result.level == RiskLevel.HIGH)
+        assertTrue(result.reasons.contains("url_non_latin_hostname"))
+    }
 }

@@ -31,18 +31,31 @@ data class RuleSet(
     val urlSignals: UrlSignals = UrlSignals(),
     val multibancoSignals: MultibancoSignals = MultibancoSignals(),
     val correlation: CorrelationConfig = CorrelationConfig(),
+    val synergy: SynergyConfig = SynergyConfig(),
     val multibanco: MultibancoConfig = MultibancoConfig(),
 )
 
 @Serializable
 data class ScoringConfig(
     val thresholds: ScoreThresholds = ScoreThresholds(),
+    val keywordWeights: KeywordWeights = KeywordWeights(),
 )
 
 @Serializable
 data class ScoreThresholds(
     val medium: Int = 40,
     val high: Int = 70,
+)
+
+@Serializable
+data class KeywordWeights(
+    val urgency: Int = 10,
+    val threat: Int = 15,
+    val payment: Int = 10,
+    val dataRequest: Int = 25,
+    val publicServices: Int = 10,
+    val delivery: Int = 10,
+    val banking: Int = 10,
 )
 
 @Serializable
@@ -98,6 +111,17 @@ data class CorrelationConfig(
 data class CorrelationWeights(
     val brandEntityMismatch: Int = 50,
     val brandUrlMismatch: Int = 35,
+)
+
+@Serializable
+data class SynergyConfig(
+    val weights: SynergyWeights = SynergyWeights(),
+)
+
+@Serializable
+data class SynergyWeights(
+    val dataRequestAndBanking: Int = 20,
+    val dataRequestAndUrgency: Int = 15,
 )
 
 @Serializable
