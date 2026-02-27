@@ -11,7 +11,12 @@ enum class RiskLevel {
 data class HistoryEvent(
     val timestamp: Long,
     val sender: String,
-    val domain: String,
+    val domain: String = "",
+    val url: String? = null,
+    val alertType: AlertType = AlertType.URL,
+    val multibancoEntidade: String? = null,
+    val multibancoReferencia: String? = null,
+    val multibancoValor: String? = null,
     val score: Int,
     val riskLevel: RiskLevel,
     val reasons: List<String> = emptyList()

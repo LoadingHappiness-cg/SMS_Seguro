@@ -3,13 +3,19 @@ package com.smsguard.rules
 import android.content.Context
 import com.smsguard.core.RuleSet
 import kotlinx.serialization.json.Json
+import androidx.core.util.AtomicFile
 import java.io.File
+import java.nio.charset.StandardCharsets
 
 class RuleLoader(private val context: Context) {
-    private val json = Json { ignoreUnknownKeys = true }
+    companion object {
+        val json: Json = Json { ignoreUnknownKeys = true }
+    }
+
     private val rulesDir = File(context.filesDir, "rules")
     private val currentFile = File(rulesDir, "ruleset_current.json")
     private val previousFile = File(rulesDir, "ruleset_previous.json")
+    private val currentAtomicFile = AtomicFile(currentFile)
 
     init {
         if (!rulesDir.exists()) rulesDir.mkdirs()
@@ -18,7 +24,7 @@ class RuleLoader(private val context: Context) {
     fun loadCurrent(): RuleSet {
         return try {
             if (currentFile.exists()) {
-                json.decodeFromString<RuleSet>(currentFile.readText())
+                json.decodeFromString<RuleSet>(currentFile.readText(Charsets.UTF_8))
             } else {
                 loadDefault()
             }
@@ -44,9 +50,25 @@ class RuleLoader(private val context: Context) {
                 currentFile.copyTo(previousFile, overwrite = true)
             }
             
-            currentFile.writeText(newJson)
+            persistBytesAtomically(newJson.toByteArray(StandardCharsets.UTF_8))
             true
         } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun persistNewRuleset(newRulesetBytes: ByteArray, newVersion: Int): Boolean {
+        return try {
+            val current = loadCurrent()
+            if (newVersion <= current.version) return false
+
+            if (currentFile.exists()) {
+                currentFile.copyTo(previousFile, overwrite = true)
+            }
+
+            persistBytesAtomically(newRulesetBytes)
+            true
+        } catch (_: Exception) {
             false
         }
     }
@@ -58,6 +80,17 @@ class RuleLoader(private val context: Context) {
             true
         } else {
             false
+        }
+    }
+
+    private fun persistBytesAtomically(bytes: ByteArray) {
+        val out = currentAtomicFile.startWrite()
+        try {
+            out.use { it.write(bytes) }
+            currentAtomicFile.finishWrite(out)
+        } catch (e: Exception) {
+            currentAtomicFile.failWrite(out)
+            throw e
         }
     }
 }

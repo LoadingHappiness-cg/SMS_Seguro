@@ -20,43 +20,43 @@ class RiskEngine(private val ruleSet: RuleSet) {
         // 1. Allowlist
         if (ruleSet.allowlistDomains.any { domain == it || domain.endsWith(".$it") }) {
             score += ruleSet.weights["allowlist"] ?: -20
-            reasons.add("Safe domain detected")
+            reasons.add("safe_domain")
         }
 
         // 2. Shorteners
         if (ruleSet.shorteners.contains(domain)) {
             score += ruleSet.weights["shortener"] ?: 40
-            reasons.add("Link shortener used")
+            reasons.add("shortener")
         }
 
         // 3. Suspicious TLDs
         if (ruleSet.suspiciousTlds.any { domain.endsWith(it) }) {
             score += ruleSet.weights["suspiciousTld"] ?: 30
-            reasons.add("Suspicious web address extension")
+            reasons.add("suspicious_tld")
         }
 
         // 4. Punycode (Internationalized Domain Names)
         if (domain.startsWith("xn--")) {
             score += ruleSet.weights["punycode"] ?: 25
-            reasons.add("Hidden characters in address")
+            reasons.add("punycode")
         }
 
         // 5. Trigger Words
         if (ruleSet.triggerWordsPt.any { text.contains(it) }) {
             score += ruleSet.weights["triggerWords"] ?: 20
-            reasons.add("Urgent or suspicious language")
+            reasons.add("trigger_words")
         }
 
         // 6. Brand Impersonation
         if (ruleSet.brandKeywordsPt.any { domain.contains(it) && !ruleSet.allowlistDomains.contains(domain) }) {
             score += ruleSet.weights["brandImpersonation"] ?: 20
-            reasons.add("Possible brand impersonation")
+            reasons.add("brand_impersonation")
         }
 
         // 7. Weird Structure (Too many dots, numbers in domain)
         if (domain.count { it == '.' } > 3 || domain.any { it.isDigit() }) {
             score += ruleSet.weights["weirdStructure"] ?: 15
-            reasons.add("Unusual link structure")
+            reasons.add("weird_structure")
         }
 
         // Clamp score

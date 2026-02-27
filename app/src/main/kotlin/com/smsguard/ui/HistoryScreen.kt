@@ -11,10 +11,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smsguard.core.HistoryEvent
+import com.smsguard.core.AlertType
 import com.smsguard.core.RiskLevel
 import com.smsguard.storage.HistoryStore
 import java.text.SimpleDateFormat
@@ -28,7 +30,7 @@ fun HistoryScreen() {
 
     if (events.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No suspicious events detected yet.", fontSize = 20.sp, color = Color.Gray)
+            Text(stringResource(com.smsguard.R.string.history_empty), fontSize = 20.sp, color = Color.Gray)
         }
     } else {
         LazyColumn(
@@ -37,7 +39,12 @@ fun HistoryScreen() {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                Text("Detection History", fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
+                Text(
+                    stringResource(com.smsguard.R.string.history_detection_title),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
             }
             items(events) { event ->
                 HistoryItem(event)
@@ -57,6 +64,13 @@ fun HistoryItem(event: HistoryEvent) {
         RiskLevel.LOW -> Color(0xFF2E7D32)
     }
 
+    val riskLabel =
+        when (event.riskLevel) {
+            RiskLevel.HIGH -> stringResource(com.smsguard.R.string.risk_high)
+            RiskLevel.MEDIUM -> stringResource(com.smsguard.R.string.risk_medium)
+            RiskLevel.LOW -> stringResource(com.smsguard.R.string.risk_low)
+        }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -73,12 +87,46 @@ fun HistoryItem(event: HistoryEvent) {
                         .background(riskColor, shape = MaterialTheme.shapes.small)
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
-                    Text(text = event.riskLevel.name, color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(text = riskLabel, color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
             
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "Domain: ${event.domain}", fontSize = 18.sp)
+            when (event.alertType) {
+                AlertType.MULTIBANCO -> {
+                    val entidade = event.multibancoEntidade.orEmpty()
+                    val referencia = event.multibancoReferencia.orEmpty()
+                    val valor = event.multibancoValor
+
+                    Text(
+                        text = stringResource(com.smsguard.R.string.mb_payment_title),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (entidade.isNotBlank()) {
+                        Text(
+                            text = "${stringResource(com.smsguard.R.string.mb_entity)}: $entidade",
+                            fontSize = 16.sp
+                        )
+                    }
+                    if (referencia.isNotBlank()) {
+                        Text(
+                            text = "${stringResource(com.smsguard.R.string.mb_reference)}: $referencia",
+                            fontSize = 16.sp
+                        )
+                    }
+                    if (!valor.isNullOrBlank()) {
+                        Text(
+                            text = "${stringResource(com.smsguard.R.string.mb_amount)}: $valor€",
+                            fontSize = 16.sp
+                        )
+                    }
+                }
+                AlertType.URL -> {
+                    val domain = event.domain.ifBlank { stringResource(com.smsguard.R.string.unknown) }
+                    Text(text = stringResource(com.smsguard.R.string.history_domain, domain), fontSize = 18.sp)
+                }
+            }
             Text(text = date, fontSize = 14.sp, color = Color.Gray)
         }
     }
