@@ -136,12 +136,7 @@ fun SetupScreen() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        Text(
-            text = stringResource(com.smsguard.R.string.setup_app_brand),
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
+        BrandHeader()
 
         if (!isNotificationEnabled) {
             Card(

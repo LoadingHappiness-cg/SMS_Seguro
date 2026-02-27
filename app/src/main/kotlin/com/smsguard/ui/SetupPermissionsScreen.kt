@@ -154,7 +154,12 @@ private fun SetupPermissionsScaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.setup_title)) },
+                title = {
+                    BrandHeader(
+                        iconSize = 32.dp,
+                        textSize = 22.sp,
+                    )
+                },
             )
         },
     ) { innerPadding ->
