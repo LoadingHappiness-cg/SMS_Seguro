@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -32,7 +33,10 @@ object AlertNotifier {
                     Manifest.permission.POST_NOTIFICATIONS
                 ) == PackageManager.PERMISSION_GRANTED
 
-            if (!granted) return
+            if (!granted) {
+                Log.d("SMS_SEGURO", "POST_NOTIFICATIONS not granted; skipping alert notification")
+                return
+            }
         }
 
         val intent = Intent(

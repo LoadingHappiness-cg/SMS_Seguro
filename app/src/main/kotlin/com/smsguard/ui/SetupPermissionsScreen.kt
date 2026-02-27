@@ -2,6 +2,7 @@ package com.smsguard.ui
 
 import android.Manifest
 import android.content.ActivityNotFoundException
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -121,13 +122,7 @@ fun SetupPermissionsScreen(
             context.openIntentSafely(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
         },
         onBatteryClick = {
-            val pm = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
-            val hasBatteryOptimizationsUi = pm != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-            if (hasBatteryOptimizationsUi) {
-                context.openIntentSafely(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
-            } else {
-                context.openAppDetails()
-            }
+            context.openBatteryHelp()
         },
         onOpenSettingsClick = {
             context.openAppNotificationSettings()
@@ -327,6 +322,46 @@ private fun Context.openIntentSafely(intent: Intent) {
     } catch (_: ActivityNotFoundException) {
         openAppDetails()
     }
+}
+
+private fun Context.openBatteryHelp() {
+    // Best-effort, OEM-safe approach:
+    // - First: request ignoring battery optimizations for this app (shows a system dialog)
+    // - Fallback: open app details (OEMs usually expose battery/autostart from there)
+    // - Xiaomi: try opening MIUI AutoStart management screen (best effort)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        val pm = getSystemService(Context.POWER_SERVICE) as? PowerManager
+        val isIgnoring = pm?.isIgnoringBatteryOptimizations(packageName) == true
+        if (!isIgnoring) {
+            val intent =
+                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                    data = Uri.parse("package:$packageName")
+                }
+            openIntentSafely(intent)
+            return
+        }
+    }
+
+    val manufacturer = (Build.MANUFACTURER ?: "").lowercase()
+    if (manufacturer.contains("xiaomi") || manufacturer.contains("redmi") || manufacturer.contains("poco")) {
+        val miuiIntent =
+            Intent("miui.intent.action.OP_AUTO_START").apply {
+                component =
+                    ComponentName(
+                        "com.miui.securitycenter",
+                        "com.miui.permcenter.autostart.AutoStartManagementActivity",
+                    )
+            }
+
+        try {
+            startActivity(miuiIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            return
+        } catch (_: Exception) {
+            // fall through
+        }
+    }
+
+    openAppDetails()
 }
 
 private fun Context.openAppDetails() {

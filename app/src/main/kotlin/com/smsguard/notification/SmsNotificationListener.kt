@@ -26,8 +26,15 @@ class SmsNotificationListener : NotificationListenerService() {
 
     private val supportedPackages = setOf(
         "com.google.android.apps.messaging",
+        "com.android.messaging",
         "com.samsung.android.messaging",
-        "com.android.mms"
+        "com.android.mms",
+
+        // Xiaomi / MIUI variants (some regions still ship a Xiaomi-branded SMS app)
+        "com.miui.mms",
+        "com.miui.sms",
+        "com.xiaomi.mms",
+        "com.xiaomi.sms",
     )
 
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -62,7 +69,18 @@ class SmsNotificationListener : NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
-        if (!supportedPackages.contains(sbn.packageName)) return
+        if (!supportedPackages.contains(sbn.packageName)) {
+            if (sbn.notification.category == Notification.CATEGORY_MESSAGE) {
+                val extras = sbn.notification.extras
+                val title = extras.getString(Notification.EXTRA_TITLE) ?: ""
+                val text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
+                Log.d(
+                    "SMS_SEGURO",
+                    "Ignoring message notification from unsupported package=${sbn.packageName} title=$title text=${text.take(120)}",
+                )
+            }
+            return
+        }
 
         val extras = sbn.notification.extras
         val title =
