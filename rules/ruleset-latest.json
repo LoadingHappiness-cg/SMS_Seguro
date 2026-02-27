@@ -1,54 +1,179 @@
 {
-  "version": 2,
-  "publishedAt": "2026-02-26T00:00:00Z",
-  "shorteners": [
-    "bit.ly",
-    "tinyurl.com",
-    "t.co",
-    "goo.gl"
-  ],
-  "suspiciousTlds": [
-    ".top",
-    ".xyz",
-    ".club",
-    ".info",
-    ".click",
-    ".link"
-  ],
-  "triggerWordsPt": [
-    "urgente",
-    "bloqueado",
-    "atualize",
-    "actualize",
-    "verifique",
-    "verificar",
-    "senha",
-    "password",
-    "confirmar",
-    "pagamento",
-    "multibanco",
-    "mbway"
-  ],
-  "brandKeywordsPt": [
-    "mbway",
-    "multibanco",
-    "ctt",
-    "banco",
-    "seguranca",
-    "segurança"
-  ],
-  "allowlistDomains": [
-    "google.com",
-    "apple.com"
-  ],
-  "weights": {
-    "allowlist": -20,
-    "shortener": 40,
-    "suspiciousTld": 30,
-    "punycode": 25,
-    "triggerWords": 20,
-    "brandImpersonation": 20,
-    "weirdStructure": 15
+  "version": 3,
+  "publishedAt": "2026-02-27T19:22:19Z",
+  "scoring": {
+    "thresholds": {
+      "medium": 40,
+      "high": 70
+    }
+  },
+  "keywordGroups": {
+    "urgency": [
+      "urgente",
+      "imediato",
+      "hoje",
+      "ate",
+      "antes de",
+      "prazo",
+      "48h",
+      "24h"
+    ],
+    "threat": [
+      "penhora",
+      "corte",
+      "bloqueio",
+      "suspensao",
+      "execucao",
+      "atraso",
+      "ultima oportunidade"
+    ],
+    "payment": [
+      "pagar",
+      "pagamento",
+      "divida",
+      "em atraso",
+      "liquidar",
+      "regularizar",
+      "taxa",
+      "fatura",
+      "multa"
+    ],
+    "dataRequest": [
+      "codigo",
+      "pin",
+      "password",
+      "palavra passe",
+      "verificacao",
+      "autenticacao",
+      "confirmacao",
+      "mbway"
+    ],
+    "publicServices": [
+      "sns",
+      "sns24",
+      "min saude",
+      "servico nacional de saude",
+      "seguranca social",
+      "financas",
+      "autoridade tributaria",
+      "irs",
+      "imt",
+      "irn"
+    ],
+    "delivery": [
+      "ctt",
+      "dhl",
+      "ups",
+      "dpd",
+      "encomenda",
+      "entrega",
+      "alfandega",
+      "desalfandegamento"
+    ],
+    "banking": [
+      "cgd",
+      "bpi",
+      "santander",
+      "millennium",
+      "novo banco",
+      "banco",
+      "conta",
+      "cartao",
+      "seguranca"
+    ]
+  },
+  "urlSignals": {
+    "suspiciousTlds": [
+      "xyz",
+      "top",
+      "club",
+      "online",
+      "site",
+      "link",
+      "me",
+      "icu",
+      "cfd"
+    ],
+    "shorteners": [
+      "bit.ly",
+      "tinyurl.com",
+      "t.co",
+      "is.gd",
+      "cutt.ly",
+      "rb.gy"
+    ],
+    "weights": {
+      "hasUrl": 10,
+      "shortener": 20,
+      "punycode": 35,
+      "cyrillicOrNonLatinHostname": 50,
+      "mixedLatinCyrillicHostnameBonus": 20,
+      "suspiciousTld": 25
+    }
+  },
+  "multibancoSignals": {
+    "weights": {
+      "hasEntityRef": 25,
+      "hasAmount": 10,
+      "unknownEntity": 30,
+      "intermediaryEntity": 20,
+      "knownEntity": -10
+    }
+  },
+  "correlation": {
+    "weights": {
+      "brandEntityMismatch": 50,
+      "brandUrlMismatch": 35
+    },
+    "brandEntityMap": {
+      "ctt": [
+        "CTT"
+      ],
+      "financas": [
+        "Autoridade Tributária",
+        "Pagamentos Estado"
+      ],
+      "seguranca social": [
+        "Segurança Social"
+      ],
+      "edp": [
+        "EDP Comercial",
+        "EDP Servico Universal"
+      ],
+      "meo": [
+        "MEO"
+      ],
+      "vodafone": [
+        "Vodafone"
+      ],
+      "nos": [
+        "NOS"
+      ]
+    },
+    "brandAllowedDomains": {
+      "ctt": [
+        "ctt.pt"
+      ],
+      "financas": [
+        "portaldasfinancas.gov.pt",
+        "at.gov.pt",
+        "gov.pt"
+      ],
+      "seguranca social": [
+        "seg-social.pt",
+        "segurancasocial.gov.pt",
+        "gov.pt"
+      ],
+      "sns": [
+        "sns24.gov.pt",
+        "sns.gov.pt",
+        "gov.pt"
+      ],
+      "mbway": [
+        "mbway.pt",
+        "sibs.pt"
+      ]
+    }
   },
   "multibanco": {
     "entities": {

@@ -1,157 +1,267 @@
 {
- "version": 2,
- "publishedAt": "2026-02-26T00:00:00Z",
- "shorteners": [
-  "bit.ly",
-  "tinyurl.com",
-  "t.co",
-  "cutt.ly",
-  "is.gd",
-  "buff.ly",
-  "ow.ly"
- ],
- "suspiciousTlds": [
-  ".xyz",
-  ".top",
-  ".click",
-  ".online",
-  ".icu",
-  ".live",
-  ".link",
-  ".info",
-  ".biz"
- ],
- "triggerWordsPt": [
-  "ctt",
-  "entrega",
-  "taxa",
-  "desalfandegamento",
-  "mbway",
-  "multibanco",
-  "conta bloqueada",
-  "urgente",
-  "vencido",
-  "atraso",
-  "reembolso"
- ],
- "brandKeywordsPt": [
-  "ctt",
-  "mbway",
-  "santander",
-  "cgd",
-  "millennium",
-  "revolut",
-  "finanças",
-  "segurança social",
-  "bpi",
-  "novo banco"
- ],
- "allowlistDomains": [
-  "google.com",
-  "microsoft.com",
-  "apple.com",
-  "facebook.com",
-  "instagram.com",
-  "whatsapp.com",
-  "amazon.com",
-  "netflix.com"
- ],
- "weights": {
-  "shortener": 40,
-  "suspiciousTld": 30,
-  "punycode": 25,
-  "triggerWords": 20,
-  "brandImpersonation": 20,
-  "weirdStructure": 15,
-  "allowlist": -20
- },
- "multibanco": {
-  "entities": {
-   "10061": "NOS",
-   "10081": "OTLIS",
-   "10083": "TIP Transportes Porto",
-   "10095": "Pagamentos Estado",
-   "10121": "ACP",
-   "10128": "Fidelidade",
-   "10130": "Eden Springs",
-   "10131": "TAP",
-   "10132": "Liberty Seguros",
-   "10155": "Loja do Condominio",
-   "10158": "Vodafone",
-   "10175": "Readers Digest",
-   "10208": "Global Noticias",
-   "10211": "Camara Porto",
-   "10212": "Motorpress",
-   "10227": "Caravela Seguros",
-   "10231": "INATEL",
-   "10241": "HiPay",
-   "10244": "Victoria Seguros",
-   "10261": "OK Teleseguro",
-   "10294": "Ageas",
-   "10297": "Vodafone",
-   "10311": "Ordem Engenheiros",
-   "10314": "IPVC",
-   "10335": "Ordem Enfermeiros",
-   "10351": "NOS Madeira",
-   "10363": "FNAC",
-   "10404": "Universidade Lusofona",
-   "10411": "Certiel",
-   "10420": "Fidelidade",
-   "10451": "ISEP",
-   "10455": "Liberty Seguros",
-   "10482": "Sportinveste",
-   "10511": "Porto Editora",
-   "10550": "Otis Elevadores",
-   "10575": "Abreu Viagens",
-   "10641": "Infraestruturas Justica",
-   "10644": "Cloudware",
-   "10652": "Sage",
-   "10828": "Nestle",
-   "10941": "IGCP",
-   "10954": "MEO",
-   "10991": "Staples",
-   "20108": "Wizink",
-   "20130": "Novo Banco",
-   "20145": "Sporting SAD",
-   "20152": "Sporting",
-   "20160": "Santa Casa",
-   "20171": "Aguas Pacos Ferreira",
-   "20173": "Liberty Seguros",
-   "20174": "EDP Comercial",
-   "20175": "Allianz",
-   "20181": "Seguranca Social",
-   "20183": "Generali",
-   "20185": "BNP Paribas",
-   "20776": "Ageas",
-   "20804": "UNICRE",
-   "20811": "EPAL",
-   "20812": "EDP Servico Universal",
-   "20813": "BPI",
-   "20815": "Aguas Gaia"
+  "version": 3,
+  "publishedAt": "2026-02-27T19:22:19Z",
+  "scoring": {
+    "thresholds": {
+      "medium": 40,
+      "high": 70
+    }
   },
-  "intermediaries": {
-   "10241": "HiPay",
-   "10559": "Ifthenpay",
-   "10611": "Easypay",
-   "11300": "LusoPay",
-   "11611": "Ifthenpay",
-   "11711": "EuPago",
-   "11888": "HiPay Wallet"
+  "keywordGroups": {
+    "urgency": [
+      "urgente",
+      "imediato",
+      "hoje",
+      "ate",
+      "antes de",
+      "prazo",
+      "48h",
+      "24h"
+    ],
+    "threat": [
+      "penhora",
+      "corte",
+      "bloqueio",
+      "suspensao",
+      "execucao",
+      "atraso",
+      "ultima oportunidade"
+    ],
+    "payment": [
+      "pagar",
+      "pagamento",
+      "divida",
+      "em atraso",
+      "liquidar",
+      "regularizar",
+      "taxa",
+      "fatura",
+      "multa"
+    ],
+    "dataRequest": [
+      "codigo",
+      "pin",
+      "password",
+      "palavra passe",
+      "verificacao",
+      "autenticacao",
+      "confirmacao",
+      "mbway"
+    ],
+    "publicServices": [
+      "sns",
+      "sns24",
+      "min saude",
+      "servico nacional de saude",
+      "seguranca social",
+      "financas",
+      "autoridade tributaria",
+      "irs",
+      "imt",
+      "irn"
+    ],
+    "delivery": [
+      "ctt",
+      "dhl",
+      "ups",
+      "dpd",
+      "encomenda",
+      "entrega",
+      "alfandega",
+      "desalfandegamento"
+    ],
+    "banking": [
+      "cgd",
+      "bpi",
+      "santander",
+      "millennium",
+      "novo banco",
+      "banco",
+      "conta",
+      "cartao",
+      "seguranca"
+    ]
   },
-  "criticalBrands": [
-   "ctt",
-   "dhl",
-   "ups",
-   "dpd",
-   "financas",
-   "seguranca social",
-   "via verde",
-   "galp",
-   "edp",
-   "meo",
-   "vodafone",
-   "nos",
-   "mbway"
-  ]
- }
+  "urlSignals": {
+    "suspiciousTlds": [
+      "xyz",
+      "top",
+      "club",
+      "online",
+      "site",
+      "link",
+      "me",
+      "icu",
+      "cfd"
+    ],
+    "shorteners": [
+      "bit.ly",
+      "tinyurl.com",
+      "t.co",
+      "is.gd",
+      "cutt.ly",
+      "rb.gy"
+    ],
+    "weights": {
+      "hasUrl": 10,
+      "shortener": 20,
+      "punycode": 35,
+      "cyrillicOrNonLatinHostname": 50,
+      "mixedLatinCyrillicHostnameBonus": 20,
+      "suspiciousTld": 25
+    }
+  },
+  "multibancoSignals": {
+    "weights": {
+      "hasEntityRef": 25,
+      "hasAmount": 10,
+      "unknownEntity": 30,
+      "intermediaryEntity": 20,
+      "knownEntity": -10
+    }
+  },
+  "correlation": {
+    "weights": {
+      "brandEntityMismatch": 50,
+      "brandUrlMismatch": 35
+    },
+    "brandEntityMap": {
+      "ctt": [
+        "CTT"
+      ],
+      "financas": [
+        "Autoridade Tributária",
+        "Pagamentos Estado"
+      ],
+      "seguranca social": [
+        "Segurança Social"
+      ],
+      "edp": [
+        "EDP Comercial",
+        "EDP Servico Universal"
+      ],
+      "meo": [
+        "MEO"
+      ],
+      "vodafone": [
+        "Vodafone"
+      ],
+      "nos": [
+        "NOS"
+      ]
+    },
+    "brandAllowedDomains": {
+      "ctt": [
+        "ctt.pt"
+      ],
+      "financas": [
+        "portaldasfinancas.gov.pt",
+        "at.gov.pt",
+        "gov.pt"
+      ],
+      "seguranca social": [
+        "seg-social.pt",
+        "segurancasocial.gov.pt",
+        "gov.pt"
+      ],
+      "sns": [
+        "sns24.gov.pt",
+        "sns.gov.pt",
+        "gov.pt"
+      ],
+      "mbway": [
+        "mbway.pt",
+        "sibs.pt"
+      ]
+    }
+  },
+  "multibanco": {
+    "entities": {
+      "10061": "NOS",
+      "10081": "OTLIS",
+      "10083": "TIP Transportes Porto",
+      "10095": "Pagamentos Estado",
+      "10121": "ACP",
+      "10128": "Fidelidade",
+      "10130": "Eden Springs",
+      "10131": "TAP",
+      "10132": "Liberty Seguros",
+      "10155": "Loja do Condominio",
+      "10158": "Vodafone",
+      "10175": "Readers Digest",
+      "10208": "Global Noticias",
+      "10211": "Camara Porto",
+      "10212": "Motorpress",
+      "10227": "Caravela Seguros",
+      "10231": "INATEL",
+      "10241": "HiPay",
+      "10244": "Victoria Seguros",
+      "10261": "OK Teleseguro",
+      "10294": "Ageas",
+      "10297": "Vodafone",
+      "10311": "Ordem Engenheiros",
+      "10314": "IPVC",
+      "10335": "Ordem Enfermeiros",
+      "10351": "NOS Madeira",
+      "10363": "FNAC",
+      "10404": "Universidade Lusofona",
+      "10411": "Certiel",
+      "10420": "Fidelidade",
+      "10451": "ISEP",
+      "10455": "Liberty Seguros",
+      "10482": "Sportinveste",
+      "10511": "Porto Editora",
+      "10550": "Otis Elevadores",
+      "10575": "Abreu Viagens",
+      "10641": "Infraestruturas Justica",
+      "10644": "Cloudware",
+      "10652": "Sage",
+      "10828": "Nestle",
+      "10941": "IGCP",
+      "10954": "MEO",
+      "10991": "Staples",
+      "20108": "Wizink",
+      "20130": "Novo Banco",
+      "20145": "Sporting SAD",
+      "20152": "Sporting",
+      "20160": "Santa Casa",
+      "20171": "Aguas Pacos Ferreira",
+      "20173": "Liberty Seguros",
+      "20174": "EDP Comercial",
+      "20175": "Allianz",
+      "20181": "Seguranca Social",
+      "20183": "Generali",
+      "20185": "BNP Paribas",
+      "20776": "Ageas",
+      "20804": "UNICRE",
+      "20811": "EPAL",
+      "20812": "EDP Servico Universal",
+      "20813": "BPI",
+      "20815": "Aguas Gaia"
+    },
+    "intermediaries": {
+      "10241": "HiPay",
+      "10559": "Ifthenpay",
+      "10611": "Easypay",
+      "11300": "LusoPay",
+      "11611": "Ifthenpay",
+      "11711": "EuPago",
+      "11888": "HiPay Wallet"
+    },
+    "criticalBrands": [
+      "ctt",
+      "dhl",
+      "ups",
+      "dpd",
+      "financas",
+      "seguranca social",
+      "via verde",
+      "galp",
+      "edp",
+      "meo",
+      "vodafone",
+      "nos",
+      "mbway"
+    ]
+  }
 }
