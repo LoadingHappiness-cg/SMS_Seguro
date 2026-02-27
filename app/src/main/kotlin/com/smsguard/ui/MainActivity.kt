@@ -1,5 +1,6 @@
 package com.smsguard.ui
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -20,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.smsguard.core.PermissionHealth
+import com.smsguard.startup.SmsProtectionService
 import com.smsguard.ui.theme.SMSGuardTheme
 
 class MainActivity : ComponentActivity() {
@@ -56,6 +58,13 @@ fun MainScreen() {
     }
 
     LaunchedEffect(Unit) {
+        val serviceIntent = Intent(context, SmsProtectionService::class.java)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            context.startForegroundService(serviceIntent)
+        } else {
+            context.startService(serviceIntent)
+        }
+
         refreshProtectionReady()
         if (!isProtectionReady) {
             selectedTab = 0

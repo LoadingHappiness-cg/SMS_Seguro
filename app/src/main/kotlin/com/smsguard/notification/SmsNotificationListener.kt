@@ -1,7 +1,10 @@
 package com.smsguard.notification
 
 import android.app.Notification
+import android.content.ComponentName
 import android.content.Context.MODE_PRIVATE
+import android.os.Bundle
+import android.os.Parcelable
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
@@ -63,37 +66,48 @@ class SmsNotificationListener : NotificationListenerService() {
 
     override fun onListenerConnected() {
         super.onListenerConnected()
+        Log.d("SMS_SEGURO", "Notification listener connected")
         ioScope.launch {
             ensureRiskEngine()
         }
     }
 
+    override fun onListenerDisconnected() {
+        super.onListenerDisconnected()
+        Log.w("SMS_SEGURO", "Notification listener disconnected; requesting rebind")
+        try {
+            requestRebind(ComponentName(this, SmsNotificationListener::class.java))
+        } catch (e: Exception) {
+            Log.e("SMS_SEGURO", "Failed to request listener rebind", e)
+        }
+    }
+
     override fun onNotificationPosted(sbn: StatusBarNotification) {
-        if (!supportedPackages.contains(sbn.packageName)) {
-            if (sbn.notification.category == Notification.CATEGORY_MESSAGE) {
-                val extras = sbn.notification.extras
-                val title = extras.getString(Notification.EXTRA_TITLE) ?: ""
-                val text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
+        try {
+            val isLikelyMessageNotification = sbn.notification.category == Notification.CATEGORY_MESSAGE
+
+            if (!supportedPackages.contains(sbn.packageName) && !isLikelyMessageNotification) {
+                return
+            }
+
+            val extras = sbn.notification.extras
+            val title =
+                extras.getString(Notification.EXTRA_TITLE)
+                    ?: applicationContext.getString(R.string.unknown)
+            val fullText = extractNotificationText(extras)
+            if (fullText.isBlank()) {
                 Log.d(
                     "SMS_SEGURO",
-                    "Ignoring message notification from unsupported package=${sbn.packageName} title=$title text=${text.take(120)}",
+                    "Message notification without extractable text. package=${sbn.packageName} category=${sbn.notification.category}",
                 )
             }
-            return
-        }
+            val text = if (fullText.length > 2_000) fullText.substring(0, 2_000) else fullText
 
-        val extras = sbn.notification.extras
-        val title =
-            extras.getString(Notification.EXTRA_TITLE)
-                ?: applicationContext.getString(R.string.unknown)
-        val fullText = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
-        val text = if (fullText.length > 2_000) fullText.substring(0, 2_000) else fullText
+            val mbData = MultibancoDetector.detect(text)
+            val urls = UrlExtractor.extractUrls(text)
+            if (urls.isEmpty() && mbData == null) return
 
-        val mbData = MultibancoDetector.detect(text)
-        val urls = UrlExtractor.extractUrls(text)
-        if (urls.isEmpty() && mbData == null) return
-
-        val riskEngine = ensureRiskEngine()
+            val riskEngine = ensureRiskEngine()
 
         var bestUrl: String = ""
         var bestDomain: String = ""
@@ -144,11 +158,36 @@ class SmsNotificationListener : NotificationListenerService() {
                 multibancoData = mbData
             )
 
-        // Show alert notification if risk is MEDIUM/HIGH or if it's a Multibanco payment request
+        val strongUrlReasons =
+            setOf(
+                "shortener",
+                "suspicious_tld",
+                "punycode",
+                "brand_impersonation",
+                "weird_structure",
+            )
+
+        val lowRiskButSuspiciousUrl =
+            assessment.alertType == AlertType.URL &&
+                (
+                    assessment.reasons.any { it in strongUrlReasons } ||
+                        (assessment.score >= 20 && assessment.reasons.size >= 2)
+                )
+
+        // Show alert notification when:
+        // - Multibanco payment request is detected, or
+        // - URL risk is MEDIUM/HIGH, or
+        // - URL risk is LOW but includes strong suspicious signals.
         val shouldNotify =
             assessment.alertType == AlertType.MULTIBANCO ||
                 assessment.level == RiskLevel.HIGH ||
-                assessment.level == RiskLevel.MEDIUM
+                assessment.level == RiskLevel.MEDIUM ||
+                lowRiskButSuspiciousUrl
+
+        Log.d(
+            "SMS_SEGURO",
+            "Assessment package=${sbn.packageName} urls=${urls.size} score=${assessment.score} level=${assessment.level} reasons=${assessment.reasons.joinToString(",")} shouldNotify=$shouldNotify",
+        )
 
         if (shouldNotify) {
             Log.d("SMS_SEGURO", "Alert triggered: ${assessment.level} (${assessment.alertType})")
@@ -161,23 +200,26 @@ class SmsNotificationListener : NotificationListenerService() {
         }
 
         // Save to history (atomic write on IO dispatcher)
-        val event =
-            HistoryEvent(
-                timestamp = System.currentTimeMillis(),
-                sender = title,
-                domain = bestDomain,
-                url = bestUrl.takeIf { it.isNotBlank() },
-                alertType = alertType,
-                multibancoEntidade = mbData?.entidade,
-                multibancoReferencia = mbData?.referencia,
-                multibancoValor = mbData?.valor,
-                score = finalScore,
-                riskLevel = finalLevel,
-                reasons = reasons
-            )
+            val event =
+                HistoryEvent(
+                    timestamp = System.currentTimeMillis(),
+                    sender = title,
+                    domain = bestDomain,
+                    url = bestUrl.takeIf { it.isNotBlank() },
+                    alertType = alertType,
+                    multibancoEntidade = mbData?.entidade,
+                    multibancoReferencia = mbData?.referencia,
+                    multibancoValor = mbData?.valor,
+                    score = finalScore,
+                    riskLevel = finalLevel,
+                    reasons = reasons
+                )
 
-        ioScope.launch {
-            historyStore.saveEvent(event)
+            ioScope.launch {
+                historyStore.saveEvent(event)
+            }
+        } catch (e: Exception) {
+            Log.e("SMS_SEGURO", "Error while processing SMS notification", e)
         }
     }
 
@@ -199,5 +241,67 @@ class SmsNotificationListener : NotificationListenerService() {
             cachedRiskEngine = newEngine
             return newEngine
         }
+    }
+
+    private fun extractNotificationText(extras: Bundle): String {
+        val parts = mutableListOf<String>()
+
+        extras.getCharSequence(Notification.EXTRA_TEXT)
+            ?.toString()
+            ?.takeIf { it.isNotBlank() }
+            ?.let(parts::add)
+
+        extras.getCharSequence(Notification.EXTRA_BIG_TEXT)
+            ?.toString()
+            ?.takeIf { it.isNotBlank() }
+            ?.let(parts::add)
+
+        extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+            ?.map { it?.toString().orEmpty() }
+            ?.map(String::trim)
+            ?.filter { it.isNotEmpty() }
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { lines ->
+                parts.add(lines.joinToString("\n"))
+            }
+
+        extractMessagingStyleTexts(extras, Notification.EXTRA_MESSAGES).forEach(parts::add)
+        extractMessagingStyleTexts(extras, Notification.EXTRA_HISTORIC_MESSAGES).forEach(parts::add)
+
+        return parts
+            .distinct()
+            .joinToString("\n")
+            .trim()
+    }
+
+    private fun extractMessagingStyleTexts(extras: Bundle, key: String): List<String> {
+        val parcelables = extras.getParcelableArrayCompat(key)
+        if (parcelables.isNullOrEmpty()) return emptyList()
+
+        val fromBundles =
+            parcelables
+                .mapNotNull { it as? Bundle }
+                .mapNotNull { bundle ->
+                    bundle.getCharSequence("text")
+                        ?.toString()
+                        ?.trim()
+                        ?.takeIf { it.isNotEmpty() }
+                }
+        if (fromBundles.isNotEmpty()) return fromBundles.distinct()
+
+        // Some OEM/framework variants provide parcelables with getText() instead of raw bundles.
+        return parcelables.mapNotNull { parcelable ->
+            runCatching {
+                val method = parcelable.javaClass.methods.firstOrNull { it.name == "getText" }
+                method?.invoke(parcelable) as? CharSequence
+            }.getOrNull()
+                ?.toString()
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
+        }.distinct()
+    }
+
+    private fun Bundle.getParcelableArrayCompat(key: String): Array<Parcelable>? {
+        return getParcelableArray(key)
     }
 }

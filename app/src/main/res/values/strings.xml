@@ -14,9 +14,11 @@
     <string name="step_notifications">Notificações</string>
     <string name="step_listener">Ler notificações de SMS</string>
     <string name="step_battery">Bateria (recomendado)</string>
+    <string name="step_autostart_xiaomi">Início automático (Xiaomi)</string>
     <string name="allow_notifications">Permitir Notificações</string>
     <string name="enable_listener">Ativar acesso a notificações</string>
     <string name="battery_allow">Evitar que a bateria bloqueie a app</string>
+    <string name="enable_autostart_xiaomi">Permitir início automático em segundo plano</string>
     <string name="protection_incomplete">Proteção incompleta — toque para concluir.</string>
     <string name="continue_btn">Continuar</string>
     <string name="notifications_needed_msg">Sem notificações, o SMS Seguro não consegue alertar.</string>
@@ -68,6 +70,10 @@
     <!-- Notification channel -->
     <string name="alert_channel_name">Alertas SMS Seguro</string>
     <string name="alert_channel_description">Alertas para links suspeitos em SMS</string>
+    <string name="protection_service_channel_name">Proteção SMS Seguro</string>
+    <string name="protection_service_channel_description">Serviço em segundo plano para manter a proteção ativa</string>
+    <string name="protection_service_title">SMS Seguro ativo</string>
+    <string name="protection_service_body">Proteção em segundo plano ligada</string>
 
     <!-- Risk levels -->
     <string name="risk_high">Perigo elevado</string>

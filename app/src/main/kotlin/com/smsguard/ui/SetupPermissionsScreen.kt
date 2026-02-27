@@ -102,12 +102,14 @@ fun SetupPermissionsScreen(
     val step1Ok = !needsPostNotifications.value && notificationsEnabled.value
     val step2Ok = hasListener.value
     val canContinue = step1Ok && step2Ok
+    val isXiaomi = remember { context.isXiaomiDevice() }
 
     SetupPermissionsScaffold(
         modifier = modifier,
         step1Ok = step1Ok,
         step2Ok = step2Ok,
         step3Ok = isIgnoringBatteryOptimizations.value,
+        showXiaomiAutoStart = isXiaomi,
         showNotificationsDeniedMsg = showNotificationsDeniedMsg,
         onNotificationsClick = {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && needsPostNotifications.value) {
@@ -123,6 +125,9 @@ fun SetupPermissionsScreen(
         },
         onBatteryClick = {
             context.openBatteryHelp()
+        },
+        onXiaomiAutoStartClick = {
+            context.openXiaomiAutoStartSettings()
         },
         onOpenSettingsClick = {
             context.openAppNotificationSettings()
@@ -140,10 +145,12 @@ private fun SetupPermissionsScaffold(
     step1Ok: Boolean,
     step2Ok: Boolean,
     step3Ok: Boolean,
+    showXiaomiAutoStart: Boolean,
     showNotificationsDeniedMsg: MutableState<Boolean>,
     onNotificationsClick: () -> Unit,
     onListenerClick: () -> Unit,
     onBatteryClick: () -> Unit,
+    onXiaomiAutoStartClick: () -> Unit,
     onOpenSettingsClick: () -> Unit,
     onContinue: () -> Unit,
     modifier: Modifier = Modifier,
@@ -158,6 +165,7 @@ private fun SetupPermissionsScaffold(
                     BrandHeader(
                         iconSize = 32.dp,
                         textSize = 22.sp,
+                        stacked = false,
                     )
                 },
             )
@@ -231,6 +239,16 @@ private fun SetupPermissionsScaffold(
                 icon = Icons.Default.Settings,
                 onClick = onBatteryClick,
             )
+
+            if (showXiaomiAutoStart) {
+                PermissionStepCard(
+                    title = stringResource(R.string.step_autostart_xiaomi),
+                    ok = true,
+                    buttonText = stringResource(R.string.enable_autostart_xiaomi),
+                    icon = Icons.Default.Settings,
+                    onClick = onXiaomiAutoStartClick,
+                )
+            }
 
             Spacer(Modifier.height(8.dp))
 
@@ -347,26 +365,34 @@ private fun Context.openBatteryHelp() {
         }
     }
 
-    val manufacturer = (Build.MANUFACTURER ?: "").lowercase()
-    if (manufacturer.contains("xiaomi") || manufacturer.contains("redmi") || manufacturer.contains("poco")) {
-        val miuiIntent =
-            Intent("miui.intent.action.OP_AUTO_START").apply {
-                component =
-                    ComponentName(
-                        "com.miui.securitycenter",
-                        "com.miui.permcenter.autostart.AutoStartManagementActivity",
-                    )
-            }
-
-        try {
-            startActivity(miuiIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            return
-        } catch (_: Exception) {
-            // fall through
-        }
+    if (isXiaomiDevice()) {
+        openXiaomiAutoStartSettings()
+        return
     }
 
     openAppDetails()
+}
+
+private fun Context.openXiaomiAutoStartSettings() {
+    val miuiIntent =
+        Intent("miui.intent.action.OP_AUTO_START").apply {
+            component =
+                ComponentName(
+                    "com.miui.securitycenter",
+                    "com.miui.permcenter.autostart.AutoStartManagementActivity",
+                )
+        }
+
+    try {
+        startActivity(miuiIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    } catch (_: Exception) {
+        openAppDetails()
+    }
+}
+
+private fun Context.isXiaomiDevice(): Boolean {
+    val manufacturer = (Build.MANUFACTURER ?: "").lowercase()
+    return manufacturer.contains("xiaomi") || manufacturer.contains("redmi") || manufacturer.contains("poco")
 }
 
 private fun Context.openAppDetails() {

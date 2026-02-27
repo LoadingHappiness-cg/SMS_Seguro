@@ -66,18 +66,7 @@ object AlertNotifier {
             )
         }
 
-        val notificationId =
-            when (assessment.alertType) {
-                AlertType.MULTIBANCO -> {
-                    val mb = assessment.multibancoData
-                    if (mb != null) {
-                        "mb:${mb.entidade}:${mb.referencia}".hashCode()
-                    } else {
-                        "mb:unknown".hashCode()
-                    }
-                }
-                AlertType.URL -> assessment.primaryUrl.hashCode()
-            }
+        val notificationId = (System.currentTimeMillis() and 0x7FFFFFFF).toInt()
 
         val pendingIntent =
             PendingIntent.getActivity(
@@ -132,11 +121,8 @@ object AlertNotifier {
                 }
             }
 
-        val notification =
-            NotificationCompat.Builder(
-                context,
-                AlertNotifierChannels.CHANNEL_ID
-            )
+        val builder =
+            NotificationCompat.Builder(context, AlertNotifierChannels.CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_warning)
                 .setContentTitle(title)
                 .setContentText(content)
@@ -147,8 +133,13 @@ object AlertNotifier {
                 .setDefaults(NotificationCompat.DEFAULT_ALL)
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
-                .setOnlyAlertOnce(true)
-                .build()
+                .setOnlyAlertOnce(false)
+
+        if (assessment.alertType == AlertType.MULTIBANCO || assessment.level == RiskLevel.HIGH) {
+            builder.setFullScreenIntent(pendingIntent, true)
+        }
+
+        val notification = builder.build()
 
         NotificationManagerCompat.from(context)
             .notify(
