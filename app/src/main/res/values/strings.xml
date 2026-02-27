@@ -66,6 +66,10 @@
     <string name="alert_score">Pontuação</string>
     <string name="alert_close">Ignorar e fechar</string>
     <string name="open_link">Abrir no navegador</string>
+    <string name="open_link_confirm_title">Abrir link?</string>
+    <string name="open_link_confirm_message">Este link pode ser perigoso. Só abra se tiver a certeza. Se tiver dúvidas, peça ajuda.</string>
+    <string name="cancel_btn">Cancelar</string>
+    <string name="open_anyway_btn">Abrir mesmo assim</string>
     <string name="ask_help">Pedir ajuda</string>
     <string name="toast_no_browser">Não foi possível abrir o navegador.</string>
     <string name="unknown">Desconhecido</string>
@@ -115,4 +119,23 @@
     <string name="reason_brand_impersonation">Possível imitação de marca</string>
     <string name="reason_weird_structure">Estrutura do link invulgar</string>
     <string name="reason_multibanco_payment">Pedido de pagamento Multibanco</string>
+    <string name="reason_keyword_urgency">Mensagem com urgência incomum.</string>
+    <string name="reason_keyword_threat">Mensagem com ameaça (bloqueio/penhora).</string>
+    <string name="reason_keyword_payment">Pedido de pagamento ou dívida na mensagem.</string>
+    <string name="reason_keyword_data_request">Pedido de código/PIN/dados sensíveis.</string>
+    <string name="reason_keyword_public_services">Mensagem usa nome de serviço público para pressionar.</string>
+    <string name="reason_keyword_delivery">Mensagem de entrega/encomenda com sinais de risco.</string>
+    <string name="reason_keyword_banking">Mensagem usa linguagem bancária sensível.</string>
+    <string name="reason_url_present">A mensagem contém um link.</string>
+    <string name="reason_non_latin_hostname">Link com caracteres não latinos (pode estar disfarçado).</string>
+    <string name="reason_mixed_latin_cyrillic">Link com mistura de caracteres latinos e cirílicos.</string>
+    <string name="reason_mb_entity_reference">Pedido inclui Entidade/Referência Multibanco.</string>
+    <string name="reason_mb_amount">Pedido inclui valor de pagamento.</string>
+    <string name="reason_mb_unknown_entity">Entidade não reconhecida.</string>
+    <string name="reason_mb_intermediary_entity">Pagamento via intermediário — confirme o destinatário.</string>
+    <string name="reason_mb_known_entity">Entidade conhecida, mas confirme sempre o destinatário.</string>
+    <string name="reason_brand_entity_mismatch">Inconsistência entre a mensagem e a entidade de pagamento.</string>
+    <string name="reason_brand_url_mismatch">Inconsistência entre a marca e o link apresentado.</string>
+    <string name="reason_data_request_minimum_medium">Pedido de código/PIN exige confirmação imediata.</string>
+    <string name="reason_non_latin_url_minimum_medium">Link com caracteres não latinos — risco mínimo moderado.</string>
 </resources>
