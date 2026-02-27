@@ -115,4 +115,21 @@
     <string name="reason_brand_impersonation">Possível imitação de marca</string>
     <string name="reason_weird_structure">Estrutura do link invulgar</string>
     <string name="reason_multibanco_payment">Pedido de pagamento Multibanco</string>
+    <string name="reason_keyword_urgency">Mensagem com urgência incomum.</string>
+    <string name="reason_keyword_threat">Mensagem com ameaça (bloqueio/penhora).</string>
+    <string name="reason_keyword_payment">Pedido de pagamento ou dívida na mensagem.</string>
+    <string name="reason_keyword_data_request">Pedido de código/PIN/dados sensíveis.</string>
+    <string name="reason_keyword_public_services">Mensagem usa nome de serviço público para pressionar.</string>
+    <string name="reason_keyword_delivery">Mensagem de entrega/encomenda com sinais de risco.</string>
+    <string name="reason_keyword_banking">Mensagem usa linguagem bancária sensível.</string>
+    <string name="reason_url_present">A mensagem contém um link.</string>
+    <string name="reason_non_latin_hostname">Link com caracteres não latinos (pode estar disfarçado).</string>
+    <string name="reason_mixed_latin_cyrillic">Link com mistura de caracteres latinos e cirílicos.</string>
+    <string name="reason_mb_entity_reference">Pedido inclui Entidade/Referência Multibanco.</string>
+    <string name="reason_mb_amount">Pedido inclui valor de pagamento.</string>
+    <string name="reason_mb_unknown_entity">Entidade não reconhecida.</string>
+    <string name="reason_mb_intermediary_entity">Pagamento via intermediário — confirme o destinatário.</string>
+    <string name="reason_mb_known_entity">Entidade conhecida, mas confirme sempre o destinatário.</string>
+    <string name="reason_brand_entity_mismatch">Inconsistência entre a mensagem e a entidade de pagamento.</string>
+    <string name="reason_brand_url_mismatch">Inconsistência entre a marca e o link apresentado.</string>
 </resources>
