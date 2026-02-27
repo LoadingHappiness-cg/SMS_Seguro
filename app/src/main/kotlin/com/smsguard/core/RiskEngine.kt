@@ -13,13 +13,13 @@ class RiskEngine(private val ruleSet: RuleSet) {
 
     private val keywordGroupWeights =
         mapOf(
-            "urgency" to 10,
-            "threat" to 15,
-            "payment" to 10,
-            "dataRequest" to 25,
-            "publicServices" to 10,
-            "delivery" to 10,
-            "banking" to 10,
+            "urgency" to ruleSet.scoring.keywordWeights.urgency,
+            "threat" to ruleSet.scoring.keywordWeights.threat,
+            "payment" to ruleSet.scoring.keywordWeights.payment,
+            "dataRequest" to ruleSet.scoring.keywordWeights.dataRequest,
+            "publicServices" to ruleSet.scoring.keywordWeights.publicServices,
+            "delivery" to ruleSet.scoring.keywordWeights.delivery,
+            "banking" to ruleSet.scoring.keywordWeights.banking,
         )
 
     fun analyze(
@@ -76,8 +76,8 @@ class RiskEngine(private val ruleSet: RuleSet) {
             reasons.add("url_suspicious_tld")
         }
 
-        val unicodeSignals = urlHosts.map { UnicodeSpoofingDetector.analyzeHostname(it) }
-        if (unicodeSignals.any { it.hasNonLatinLetters }) {
+        val unicodeSignals = urls.mapNotNull { url -> UnicodeSpoofingDetector.checkUrl(url) }
+        if (unicodeSignals.any { it.hasCyrillic }) {
             score += ruleSet.urlSignals.weights.cyrillicOrNonLatinHostname
             reasons.add("url_non_latin_hostname")
         }
@@ -156,6 +156,16 @@ class RiskEngine(private val ruleSet: RuleSet) {
                     reasons.add("correlation_brand_url_mismatch")
                 }
             }
+        }
+
+        val mediumThreshold = ruleSet.scoring.thresholds.medium
+        if ("dataRequest" in matchedGroups && score < mediumThreshold) {
+            score = mediumThreshold
+            reasons.add("data_request_minimum_medium")
+        }
+        if (unicodeSignals.any { it.hasCyrillic } && score < mediumThreshold) {
+            score = mediumThreshold
+            reasons.add("non_latin_url_minimum_medium")
         }
 
         val finalScore = score.coerceIn(0, 100)

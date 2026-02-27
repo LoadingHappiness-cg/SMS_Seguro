@@ -1,10 +1,19 @@
 {
-  "version": 3,
-  "publishedAt": "2026-02-27T19:22:19Z",
+  "version": 5,
+  "publishedAt": "2026-02-27T20:46:32Z",
   "scoring": {
     "thresholds": {
       "medium": 40,
       "high": 70
+    },
+    "keywordWeights": {
+      "payment": 10,
+      "publicServices": 10,
+      "delivery": 10,
+      "dataRequest": 35,
+      "banking": 15,
+      "urgency": 15,
+      "threat": 20
     }
   },
   "keywordGroups": {
@@ -46,7 +55,19 @@
       "verificacao",
       "autenticacao",
       "confirmacao",
-      "mbway"
+      "mbway",
+      "envie",
+      "enviar",
+      "partilhe",
+      "comunique",
+      "forneca",
+      "fornecer",
+      "introduza",
+      "digite",
+      "insira",
+      "codigo sms",
+      "one time",
+      "otp"
     ],
     "publicServices": [
       "sns",
@@ -263,5 +284,11 @@
       "nos",
       "mbway"
     ]
+  },
+  "synergy": {
+    "weights": {
+      "dataRequestAndBanking": 20,
+      "dataRequestAndUrgency": 15
+    }
   }
 }

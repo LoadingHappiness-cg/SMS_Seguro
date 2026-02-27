@@ -63,6 +63,10 @@
     <string name="alert_score">Pontuação</string>
     <string name="alert_close">Ignorar e fechar</string>
     <string name="open_link">Abrir no navegador</string>
+    <string name="open_link_confirm_title">Abrir link?</string>
+    <string name="open_link_confirm_message">Este link pode ser perigoso. Só abra se tiver a certeza. Se tiver dúvidas, peça ajuda.</string>
+    <string name="cancel_btn">Cancelar</string>
+    <string name="open_anyway_btn">Abrir mesmo assim</string>
     <string name="ask_help">Pedir ajuda</string>
     <string name="toast_no_browser">Não foi possível abrir o navegador.</string>
     <string name="unknown">Desconhecido</string>
@@ -124,4 +128,6 @@
     <string name="reason_mb_known_entity">Entidade conhecida, mas confirme sempre o destinatário.</string>
     <string name="reason_brand_entity_mismatch">Inconsistência entre a mensagem e a entidade de pagamento.</string>
     <string name="reason_brand_url_mismatch">Inconsistência entre a marca e o link apresentado.</string>
+    <string name="reason_data_request_minimum_medium">Pedido de código/PIN exige confirmação imediata.</string>
+    <string name="reason_non_latin_url_minimum_medium">Link com caracteres não latinos — risco mínimo moderado.</string>
 </resources>

@@ -14,6 +14,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -177,6 +181,7 @@ fun AlertScreen(
     onHelp: () -> Unit
 ) {
     val bgColor = if (riskLevel == "HIGH") Color(0xFFB71C1C) else Color(0xFFE65100)
+    var showOpenLinkDialog by remember { mutableStateOf(false) }
     val riskLabel =
         when (riskLevel) {
             "HIGH" -> stringResource(R.string.risk_high)
@@ -341,7 +346,7 @@ fun AlertScreen(
 
         if (hasUrl) {
             OutlinedButton(
-                onClick = onOpen,
+                onClick = { showOpenLinkDialog = true },
                 modifier = Modifier.fillMaxWidth().height(64.dp),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
                 border = ButtonDefaults.outlinedButtonBorder.copy(width = 2.dp)
@@ -360,6 +365,29 @@ fun AlertScreen(
                 fontWeight = FontWeight.Bold
             )
         }
+    }
+
+    if (showOpenLinkDialog) {
+        AlertDialog(
+            onDismissRequest = { showOpenLinkDialog = false },
+            title = { Text(stringResource(R.string.open_link_confirm_title)) },
+            text = { Text(stringResource(R.string.open_link_confirm_message)) },
+            dismissButton = {
+                TextButton(onClick = { showOpenLinkDialog = false }) {
+                    Text(stringResource(R.string.cancel_btn))
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showOpenLinkDialog = false
+                        onOpen()
+                    },
+                ) {
+                    Text(stringResource(R.string.open_anyway_btn))
+                }
+            },
+        )
     }
 }
 
@@ -387,6 +415,8 @@ private fun reasonLabel(code: String): String =
         "mb_known_entity" -> stringResource(R.string.reason_mb_known_entity)
         "correlation_brand_entity_mismatch" -> stringResource(R.string.reason_brand_entity_mismatch)
         "correlation_brand_url_mismatch" -> stringResource(R.string.reason_brand_url_mismatch)
+        "data_request_minimum_medium" -> stringResource(R.string.reason_data_request_minimum_medium)
+        "non_latin_url_minimum_medium" -> stringResource(R.string.reason_non_latin_url_minimum_medium)
         "safe_domain" -> stringResource(R.string.reason_safe_domain)
         "shortener" -> stringResource(R.string.reason_shortener)
         "suspicious_tld" -> stringResource(R.string.reason_suspicious_tld)
