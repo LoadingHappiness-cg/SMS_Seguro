@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1024"
+  height="1024"
+  viewBox="0 0 108 108"
+>
+  <rect x="0" y="0" width="108" height="108" fill="#F5F7FA" />
+
+  <!--
+    Icon artwork is based on the existing Android VectorDrawable at:
+    app/src/main/res/drawable/ic_launcher_foreground.xml
+
+    The group transform shrinks the symbol to ~72% of the canvas to ensure
+    clean launcher-icon padding.
+  -->
+  <g transform="translate(15.12 15.12) scale(0.72)">
+    <!-- Shield -->
+    <path
+      fill="#0D3B7A"
+      d="M54,8 L86,20 V50 C86,73 72,90 54,100 C36,90 22,73 22,50 V20 Z"
+    />
+    <path
+      fill="#1E5AA8"
+      d="M54,8 L54,100 C36,90 22,73 22,50 V20 Z"
+    />
+    <path
+      fill="#0A2E60"
+      d="M54,58 L86,50 V50 C86,73 72,90 54,100 Z"
+    />
+
+    <!-- Chat bubble (fill) -->
+    <path
+      fill="#45A8F5"
+      d="M36,30 H72 Q82,30 82,40 V58 Q82,68 72,68 H50 L42,76 V68 H36 Q26,68 26,58 V40 Q26,30 36,30 Z"
+    />
+
+    <!-- Chat bubble border -->
+    <path
+      fill="none"
+      d="M36,30 H72 Q82,30 82,40 V58 Q82,68 72,68 H50 L42,76 V68 H36 Q26,68 26,58 V40 Q26,30 36,30 Z"
+      stroke="#FFFFFF"
+      stroke-width="6"
+      stroke-linejoin="round"
+      stroke-linecap="round"
+    />
+
+    <!-- Check mark -->
+    <path
+      fill="none"
+      d="M44,50 L52,58 L66,44"
+      stroke="#B9F7C2"
+      stroke-width="8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </g>
+</svg>

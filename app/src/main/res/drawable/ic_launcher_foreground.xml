@@ -1,0 +1,49 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Shrink artwork to ~72% for clean launcher-icon padding -->
+    <group
+        android:translateX="15.12"
+        android:translateY="15.12"
+        android:scaleX="0.72"
+        android:scaleY="0.72">
+
+        <!-- Shield (no text) -->
+        <path
+            android:fillColor="#0D3B7A"
+            android:pathData="M54,8 L86,20 V50 C86,73 72,90 54,100 C36,90 22,73 22,50 V20 Z" />
+        <path
+            android:fillColor="#1E5AA8"
+            android:pathData="M54,8 L54,100 C36,90 22,73 22,50 V20 Z" />
+        <path
+            android:fillColor="#0A2E60"
+            android:pathData="M54,58 L86,50 V50 C86,73 72,90 54,100 Z" />
+
+        <!-- Chat bubble (fill) -->
+        <path
+            android:fillColor="#45A8F5"
+            android:pathData="M36,30 H72 Q82,30 82,40 V58 Q82,68 72,68 H50 L42,76 V68 H36 Q26,68 26,58 V40 Q26,30 36,30 Z" />
+
+        <!-- Chat bubble border -->
+        <path
+            android:fillColor="@android:color/transparent"
+            android:pathData="M36,30 H72 Q82,30 82,40 V58 Q82,68 72,68 H50 L42,76 V68 H36 Q26,68 26,58 V40 Q26,30 36,30 Z"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="6"
+            android:strokeLineJoin="round"
+            android:strokeLineCap="round" />
+
+        <!-- Check mark -->
+        <path
+            android:fillColor="@android:color/transparent"
+            android:pathData="M44,50 L52,58 L66,44"
+            android:strokeColor="#B9F7C2"
+            android:strokeWidth="8"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+    </group>
+
+</vector>
