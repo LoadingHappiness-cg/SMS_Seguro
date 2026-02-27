@@ -38,65 +38,23 @@ object SmsEventProcessor {
 
         val mbData = MultibancoDetector.detect(text)
         val urls = UrlExtractor.extractUrls(text)
-        if (urls.isEmpty() && mbData == null) return false
 
         val riskEngine = ensureRiskEngine(context)
-
-        var bestUrl = ""
-        var bestDomain = ""
-        var bestResultScore = 0
-        var bestResultReasons: List<String> = emptyList()
-
-        for (url in urls) {
-            val result = riskEngine.analyze(url, text)
-            if (result.score >= bestResultScore) {
-                bestResultScore = result.score
-                bestResultReasons = result.reasons
-                bestUrl = url
-                bestDomain = UrlExtractor.getDomain(url)
-            }
-        }
-
-        val mbScore = if (mbData != null) 30 + if (!mbData.valor.isNullOrBlank()) 10 else 0 else 0
-        val finalScore = maxOf(bestResultScore, mbScore)
-        val computedLevel =
-            when {
-                finalScore >= 70 -> RiskLevel.HIGH
-                finalScore >= 40 -> RiskLevel.MEDIUM
-                else -> RiskLevel.LOW
-            }
-        val finalLevel = if (mbData != null && computedLevel == RiskLevel.LOW) RiskLevel.MEDIUM else computedLevel
-
-        val reasons =
-            buildList {
-                if (mbData != null) add("multibanco_payment")
-                addAll(bestResultReasons)
-            }.distinct()
-
-        val alertType = if (mbData != null) AlertType.MULTIBANCO else AlertType.URL
-        val assessment =
-            RiskAssessment(
-                alertType = alertType,
-                primaryUrl = bestUrl,
-                primaryDomain = bestDomain,
-                score = finalScore,
-                level = finalLevel,
-                reasons = reasons,
+        val result =
+            riskEngine.analyze(
+                messageText = text,
+                urls = urls,
                 multibancoData = mbData,
             )
 
-        val strongUrlReasons = setOf("shortener", "suspicious_tld", "punycode", "brand_impersonation", "weird_structure")
-        val lowRiskButSuspiciousUrl =
-            assessment.alertType == AlertType.URL &&
-                (assessment.reasons.any { it in strongUrlReasons } || (assessment.score >= 20 && assessment.reasons.size >= 2))
+        if (urls.isEmpty() && mbData == null && result.score == 0) {
+            return false
+        }
 
-        val shouldNotify =
-            assessment.alertType == AlertType.MULTIBANCO ||
-                assessment.level == RiskLevel.HIGH ||
-                assessment.level == RiskLevel.MEDIUM ||
-                lowRiskButSuspiciousUrl
+        val alertType = if (mbData != null) AlertType.MULTIBANCO else AlertType.URL
+        val shouldNotify = result.level == RiskLevel.HIGH || result.level == RiskLevel.MEDIUM
 
-        val eventKey = buildEventKey(text, assessment)
+        val eventKey = buildEventKey(text, result)
         if (isDuplicateEvent(context, eventKey)) {
             Log.d(
                 "SMS_SEGURO",
@@ -107,26 +65,39 @@ object SmsEventProcessor {
 
         Log.d(
             "SMS_SEGURO",
-            "Assessment source=$source package=${packageName.orEmpty()} urls=${urls.size} score=${assessment.score} level=${assessment.level} reasons=${assessment.reasons.joinToString(",")} shouldNotify=$shouldNotify",
+            "Assessment source=$source package=${packageName.orEmpty()} urls=${urls.size} score=${result.score} level=${result.level} reasons=${result.reasons.joinToString(",")} shouldNotify=$shouldNotify",
         )
 
         if (shouldNotify) {
-            AlertNotifier.show(context, sender, assessment)
+            AlertNotifier.show(
+                context = context,
+                sender = sender,
+                assessment =
+                    RiskAssessment(
+                        alertType = alertType,
+                        primaryUrl = result.primaryUrl,
+                        primaryDomain = result.primaryDomain,
+                        score = result.score,
+                        level = result.level,
+                        reasons = result.reasons,
+                        multibancoData = mbData,
+                    ),
+            )
         }
 
         val event =
             HistoryEvent(
                 timestamp = System.currentTimeMillis(),
                 sender = sender,
-                domain = bestDomain,
-                url = bestUrl.takeIf { it.isNotBlank() },
+                domain = result.primaryDomain,
+                url = result.primaryUrl.takeIf { it.isNotBlank() },
                 alertType = alertType,
                 multibancoEntidade = mbData?.entidade,
                 multibancoReferencia = mbData?.referencia,
                 multibancoValor = mbData?.valor,
-                score = finalScore,
-                riskLevel = finalLevel,
-                reasons = reasons,
+                score = result.score,
+                riskLevel = result.level,
+                reasons = result.reasons,
             )
         HistoryStore(context).saveEvent(event)
         return shouldNotify
@@ -149,21 +120,13 @@ object SmsEventProcessor {
         }
     }
 
-    private fun buildEventKey(
-        text: String,
-        assessment: RiskAssessment,
-    ): String {
+    private fun buildEventKey(text: String, result: RiskEngine.RiskResult): String {
         val normalizedText = text.lowercase().replace("\\s+".toRegex(), " ").take(180)
-        val mb =
-            assessment.multibancoData?.let {
-                "${it.entidade.orEmpty()}|${it.referencia.orEmpty()}|${it.valor.orEmpty()}"
-            }.orEmpty()
         return listOf(
-            assessment.alertType.name,
+            result.level.name,
             normalizedText,
-            assessment.primaryUrl.lowercase(),
-            assessment.primaryDomain.lowercase(),
-            mb,
+            result.primaryUrl.lowercase(),
+            result.primaryDomain.lowercase(),
         ).joinToString("|")
     }
 
