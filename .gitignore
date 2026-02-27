@@ -16,3 +16,6 @@ local.properties
 # Never commit signing keys
 rules/private_key.pem
 .venv/
+
+# Local debug artifacts
+apk_snapshots/
