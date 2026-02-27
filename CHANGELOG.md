@@ -2,6 +2,8 @@
 
 ## v0.1-alpha
 
+Primeira versão funcional do SMS Seguro, focada na deteção de burlas por SMS em Portugal.
+
 - Adicionado scoring de risco explicável (`LOW` / `MEDIUM` / `HIGH`).
 - Adicionado parsing Multibanco com distinção entre entidade conhecida, intermediária e desconhecida.
 - Adicionada deteção de inconsistência entre marca e entidade de pagamento.
