@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- PT-PT override (kept identical to default for now) -->
     <string name="app_name">SMS Seguro</string>
 
-    <!-- Tabs / navigation -->
     <string name="tab_setup">Proteção</string>
     <string name="tab_history">Histórico</string>
     <string name="cd_setup">Proteção</string>
     <string name="cd_history">Histórico</string>
 
-    <!-- Setup -->
     <string name="setup_title">Ativar Proteção</string>
     <string name="setup_subtitle">Siga estes passos para o SMS Seguro funcionar.</string>
     <string name="step_notifications">Notificações</string>
@@ -43,13 +42,11 @@
     <string name="update_rejected_security">Atualização rejeitada por segurança.</string>
     <string name="update_failed">Não foi possível atualizar. Tente novamente.</string>
 
-    <!-- History -->
     <string name="history_empty">Ainda não foram detetados eventos suspeitos.</string>
     <string name="history_title">Histórico</string>
     <string name="history_detection_title">Histórico de deteções</string>
     <string name="history_domain">Domínio: %1$s</string>
 
-    <!-- Alert screen -->
     <string name="alert_title">Alerta de segurança</string>
     <string name="alert_danger_detected">ALERTA DETETADO</string>
     <string name="alert_risk_level">Nível de risco: %1$s</string>
@@ -65,17 +62,14 @@
     <string name="toast_no_browser">Não foi possível abrir o navegador.</string>
     <string name="unknown">Desconhecido</string>
 
-    <!-- Notification channel -->
     <string name="alert_channel_name">Alertas SMS Seguro</string>
     <string name="alert_channel_description">Alertas para links suspeitos em SMS</string>
 
-    <!-- Risk levels -->
     <string name="risk_high">Perigo elevado</string>
     <string name="risk_medium">Risco moderado</string>
     <string name="risk_low">Baixo risco</string>
     <string name="risk_unknown">Desconhecido</string>
 
-    <!-- Notification alert copy -->
     <string name="notif_high_title">⚠️ Possível burla por SMS</string>
     <string name="notif_high_text">Não clique neste link</string>
     <string name="notif_medium_title">⚠️ SMS suspeito</string>
@@ -84,7 +78,6 @@
     <string name="notif_low_text">Toque para ver detalhes</string>
     <string name="notif_content_with_domain">%1$s — %2$s</string>
 
-    <!-- Multibanco payment detection -->
     <string name="mb_payment_title">Pedido de pagamento Multibanco</string>
     <string name="mb_notif_title">⚠️ Pedido de pagamento</string>
     <string name="mb_entity">Entidade</string>
@@ -97,7 +90,6 @@
     <string name="mb_notif_content_missing">Pedido de pagamento Multibanco detetado</string>
     <string name="mb_notif_bigtext_with_value">Entidade: %1$s\nReferência: %2$s\nValor: %3$s€</string>
 
-    <!-- Risk reasons (display) -->
     <string name="reason_safe_domain">Domínio conhecido como seguro</string>
     <string name="reason_shortener">Foi usado um encurtador de links</string>
     <string name="reason_suspicious_tld">Extensão do endereço pouco comum</string>
