@@ -23,7 +23,7 @@ android {
         minSdk 28
         targetSdk 34
         versionCode 1
-        versionName "0.1-alpha"
+        versionName "0.1.1-alpha"
 
         buildConfigField "String", "RULESET_JSON_URL", "\"https://raw.githubusercontent.com/LoadingHappiness-cg/SMS_Seguro/main/rules/ruleset-latest.json\""
         buildConfigField "String", "RULESET_SIG_URL", "\"https://raw.githubusercontent.com/LoadingHappiness-cg/SMS_Seguro/main/rules/ruleset-latest.sig\""
