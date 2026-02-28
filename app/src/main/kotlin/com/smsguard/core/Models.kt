@@ -11,6 +11,7 @@ enum class RiskLevel {
 data class HistoryEvent(
     val timestamp: Long,
     val sender: String,
+    val messageText: String? = null,
     val domain: String = "",
     val url: String? = null,
     val alertType: AlertType = AlertType.URL,

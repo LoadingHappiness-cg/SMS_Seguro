@@ -145,6 +145,7 @@ private fun openAlertFromHistory(context: Context, event: HistoryEvent) {
     val intent =
         Intent(context, AlertActivity::class.java).apply {
             putExtra("sender", event.sender)
+            putExtra("message_text", event.messageText.orEmpty())
             putExtra("domain", event.domain)
             putExtra("url", event.url.orEmpty())
             putExtra("score", event.score)

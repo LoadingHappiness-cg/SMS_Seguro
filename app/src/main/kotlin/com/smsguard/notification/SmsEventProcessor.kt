@@ -52,7 +52,7 @@ object SmsEventProcessor {
         }
 
         val alertType = if (mbData != null) AlertType.MULTIBANCO else AlertType.URL
-        val shouldNotify = result.level == RiskLevel.HIGH || result.level == RiskLevel.MEDIUM
+        val shouldNotify = shouldNotify(alertType, result)
 
         val eventKey = buildEventKey(text, result)
         if (isDuplicateEvent(context, eventKey)) {
@@ -77,6 +77,7 @@ object SmsEventProcessor {
                         alertType = alertType,
                         primaryUrl = result.primaryUrl,
                         primaryDomain = result.primaryDomain,
+                        messageText = text,
                         score = result.score,
                         level = result.level,
                         reasons = result.reasons,
@@ -89,6 +90,7 @@ object SmsEventProcessor {
             HistoryEvent(
                 timestamp = System.currentTimeMillis(),
                 sender = sender,
+                messageText = text,
                 domain = result.primaryDomain,
                 url = result.primaryUrl.takeIf { it.isNotBlank() },
                 alertType = alertType,
@@ -143,5 +145,34 @@ object SmsEventProcessor {
                 .apply()
         }
         return duplicate
+    }
+
+    internal fun shouldNotify(
+        alertType: AlertType,
+        result: RiskEngine.RiskResult,
+    ): Boolean {
+        val strongUrlReasons =
+            setOf(
+                "url_shortener",
+                "url_suspicious_tld",
+                "url_punycode",
+                "url_non_latin_hostname",
+                "url_mixed_latin_cyrillic",
+                "correlation_brand_url_mismatch",
+                "correlation_brand_entity_mismatch",
+                "keyword_dataRequest",
+            )
+
+        val lowRiskButSuspiciousUrl =
+            alertType == AlertType.URL &&
+                (
+                    result.reasons.any { it in strongUrlReasons } ||
+                        (result.score >= 20 && result.reasons.size >= 2)
+                )
+
+        return alertType == AlertType.MULTIBANCO ||
+            result.level == RiskLevel.HIGH ||
+            result.level == RiskLevel.MEDIUM ||
+            lowRiskButSuspiciousUrl
     }
 }

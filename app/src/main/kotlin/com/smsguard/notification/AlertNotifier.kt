@@ -50,6 +50,7 @@ object AlertNotifier {
 
             putExtra("sender", sender)
             putExtra("url", assessment.primaryUrl)
+            putExtra("message_text", assessment.messageText)
             putExtra("score", assessment.score)
             putExtra("level", assessment.level.name)
             putExtra("alert_type", assessment.alertType.name)

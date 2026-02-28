@@ -4,6 +4,7 @@ data class RiskAssessment(
     val alertType: AlertType,
     val primaryUrl: String,
     val primaryDomain: String,
+    val messageText: String? = null,
     val score: Int,
     val level: RiskLevel,
     val reasons: List<String>,

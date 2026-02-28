@@ -65,13 +65,11 @@
     <string name="alert_risk">Nível de risco</string>
     <string name="alert_score">Pontuação</string>
     <string name="alert_close">Ignorar e fechar</string>
-    <string name="open_link">Abrir no navegador</string>
-    <string name="open_link_confirm_title">Abrir link?</string>
-    <string name="open_link_confirm_message">Este link pode ser perigoso. Só abra se tiver a certeza. Se tiver dúvidas, peça ajuda.</string>
-    <string name="cancel_btn">Cancelar</string>
-    <string name="open_anyway_btn">Abrir mesmo assim</string>
     <string name="ask_help">Pedir ajuda</string>
-    <string name="toast_no_browser">Não foi possível abrir o navegador.</string>
+    <string name="help_share_intro">Recebi um SMS suspeito.</string>
+    <string name="help_share_request">Podes verificar se é seguro?</string>
+    <string name="help_share_sender">Remetente: %1$s</string>
+    <string name="help_share_full_message">Mensagem completa:</string>
     <string name="unknown">Desconhecido</string>
 
     <!-- Notification channel -->

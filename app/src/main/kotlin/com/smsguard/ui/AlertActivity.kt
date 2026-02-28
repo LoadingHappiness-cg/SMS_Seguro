@@ -1,9 +1,7 @@
 package com.smsguard.ui
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -14,10 +12,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,6 +34,7 @@ class AlertActivity : ComponentActivity() {
                 ?: getString(R.string.unknown)
 
         val url = intent.getStringExtra("url") ?: ""
+        val messageText = intent.getStringExtra("message_text").orEmpty()
 
         val score =
             intent.getIntExtra("score", -1)
@@ -88,17 +83,11 @@ class AlertActivity : ComponentActivity() {
                     mbEntidade = mbEntidade,
                     mbReferencia = mbReferencia,
                     mbValor = mbValor,
-                    hasUrl = url.isNotBlank(),
                     onClose = { finish() },
-                    onOpen = {
-                        try {
-                            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-                        } catch (_: Exception) {
-                            Toast.makeText(this, getString(R.string.toast_no_browser), Toast.LENGTH_SHORT).show()
-                        }
-                    },
                     onHelp = {
                         pedirAjuda(
+                            sender = sender,
+                            messageText = messageText,
                             link = url,
                             alertType = alertType,
                             mbEntidade = mbEntidade,
@@ -112,6 +101,8 @@ class AlertActivity : ComponentActivity() {
     }
 
     private fun pedirAjuda(
+        sender: String,
+        messageText: String,
         link: String,
         alertType: AlertType,
         mbEntidade: String,
@@ -122,10 +113,17 @@ class AlertActivity : ComponentActivity() {
 
         val message =
             buildString {
-                appendLine("Recebi um SMS suspeito.")
+                appendLine(getString(R.string.help_share_intro))
                 appendLine()
-                appendLine("Podes verificar se é seguro?")
+                appendLine(getString(R.string.help_share_request))
                 appendLine()
+                appendLine(getString(R.string.help_share_sender, sender))
+                appendLine()
+                if (messageText.isNotBlank()) {
+                    appendLine(getString(R.string.help_share_full_message))
+                    appendLine(messageText)
+                    appendLine()
+                }
                 if (alertType == AlertType.MULTIBANCO) {
                     appendLine(getString(R.string.mb_payment_title))
                     if (mbEntidade.isNotBlank()) {
@@ -175,13 +173,10 @@ fun AlertScreen(
     mbEntidade: String,
     mbReferencia: String,
     mbValor: String?,
-    hasUrl: Boolean,
     onClose: () -> Unit,
-    onOpen: () -> Unit,
     onHelp: () -> Unit
 ) {
     val bgColor = if (riskLevel == "HIGH") Color(0xFFB71C1C) else Color(0xFFE65100)
-    var showOpenLinkDialog by remember { mutableStateOf(false) }
     val riskLabel =
         when (riskLevel) {
             "HIGH" -> stringResource(R.string.risk_high)
@@ -344,19 +339,6 @@ fun AlertScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (hasUrl) {
-            OutlinedButton(
-                onClick = { showOpenLinkDialog = true },
-                modifier = Modifier.fillMaxWidth().height(64.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                border = ButtonDefaults.outlinedButtonBorder.copy(width = 2.dp)
-            ) {
-                Text(stringResource(R.string.open_link), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         TextButton(onClick = onClose) {
             Text(
                 stringResource(R.string.alert_close),
@@ -365,29 +347,6 @@ fun AlertScreen(
                 fontWeight = FontWeight.Bold
             )
         }
-    }
-
-    if (showOpenLinkDialog) {
-        AlertDialog(
-            onDismissRequest = { showOpenLinkDialog = false },
-            title = { Text(stringResource(R.string.open_link_confirm_title)) },
-            text = { Text(stringResource(R.string.open_link_confirm_message)) },
-            dismissButton = {
-                TextButton(onClick = { showOpenLinkDialog = false }) {
-                    Text(stringResource(R.string.cancel_btn))
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showOpenLinkDialog = false
-                        onOpen()
-                    },
-                ) {
-                    Text(stringResource(R.string.open_anyway_btn))
-                }
-            },
-        )
     }
 }
 
