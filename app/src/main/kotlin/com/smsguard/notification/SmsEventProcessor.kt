@@ -9,6 +9,7 @@ import com.smsguard.core.MultibancoDetector
 import com.smsguard.core.RiskAssessment
 import com.smsguard.core.RiskEngine
 import com.smsguard.core.RiskLevel
+import com.smsguard.core.TextNormalizer
 import com.smsguard.core.UrlExtractor
 import com.smsguard.rules.RuleLoader
 import com.smsguard.storage.HistoryStore
@@ -35,14 +36,16 @@ object SmsEventProcessor {
     ): Boolean {
         val text = rawText.trim().take(2_000)
         if (text.isBlank()) return false
+        val normalizedText = TextNormalizer.normalize(text)
 
-        val mbData = MultibancoDetector.detect(text)
+        val mbData = MultibancoDetector.detect(normalizedText)
         val urls = UrlExtractor.extractUrls(text)
 
         val riskEngine = ensureRiskEngine(context)
         val result =
             riskEngine.analyze(
                 messageText = text,
+                normalizedText = normalizedText,
                 urls = urls,
                 multibancoData = mbData,
             )
@@ -54,7 +57,7 @@ object SmsEventProcessor {
         val alertType = if (mbData != null) AlertType.MULTIBANCO else AlertType.URL
         val shouldNotify = shouldNotify(alertType, result)
 
-        val eventKey = buildEventKey(text, result)
+        val eventKey = buildEventKey(normalizedText, result)
         if (isDuplicateEvent(context, eventKey)) {
             Log.d(
                 "SMS_SEGURO",
@@ -122,11 +125,11 @@ object SmsEventProcessor {
         }
     }
 
-    private fun buildEventKey(text: String, result: RiskEngine.RiskResult): String {
-        val normalizedText = text.lowercase().replace("\\s+".toRegex(), " ").take(180)
+    private fun buildEventKey(normalizedText: String, result: RiskEngine.RiskResult): String {
+        val eventText = normalizedText.take(180)
         return listOf(
             result.level.name,
-            normalizedText,
+            eventText,
             result.primaryUrl.lowercase(),
             result.primaryDomain.lowercase(),
         ).joinToString("|")

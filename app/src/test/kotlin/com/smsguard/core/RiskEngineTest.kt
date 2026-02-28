@@ -161,4 +161,40 @@ class RiskEngineTest {
         assertTrue(result.level == RiskLevel.MEDIUM || result.level == RiskLevel.HIGH)
         assertTrue(result.reasons.contains("url_non_latin_hostname"))
     }
+
+    @Test
+    fun uppercaseAndLowercaseMessages_haveSameRiskLevel() {
+        val engine = RiskEngine(ruleSet)
+
+        val lowercase =
+            engine.analyze(
+                messageText = "envie o codigo sms para confirmar a conta",
+                urls = emptyList(),
+                multibancoData = null,
+            )
+
+        val uppercase =
+            engine.analyze(
+                messageText = "ENVIE O CODIGO SMS PARA CONFIRMAR A CONTA",
+                urls = emptyList(),
+                multibancoData = null,
+            )
+
+        assertEquals(lowercase.level, uppercase.level)
+    }
+
+    @Test
+    fun minimalMultibancoMessage_isNeverLow() {
+        val engine = RiskEngine(ruleSet)
+
+        val result =
+            engine.analyze(
+                messageText = "Pagamento urgente. Entidade 84532 Ref 123456789 Valor 2.99€",
+                urls = emptyList(),
+                multibancoData = MultibancoDetector.detect("pagamento urgente. entidade 84532 ref 123456789 valor 2.99€"),
+            )
+
+        assertTrue(result.level == RiskLevel.MEDIUM || result.level == RiskLevel.HIGH)
+        assertTrue(result.reasons.contains("mb_payment_request"))
+    }
 }

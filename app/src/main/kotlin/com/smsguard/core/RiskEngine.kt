@@ -24,14 +24,14 @@ class RiskEngine(private val ruleSet: RuleSet) {
 
     fun analyze(
         messageText: String,
+        normalizedText: String = TextNormalizer.normalize(messageText),
         urls: List<String>,
         multibancoData: MultibancoData?,
     ): RiskResult {
-        val normalizedMessage = TextNormalizer.normalize(messageText)
         var score = 0
         val reasons = linkedSetOf<String>()
 
-        val matchedGroups = detectKeywordGroups(normalizedMessage)
+        val matchedGroups = detectKeywordGroups(normalizedText)
         matchedGroups.forEach { group ->
             score += keywordGroupWeights[group] ?: 0
             reasons.add("keyword_$group")
@@ -102,7 +102,7 @@ class RiskEngine(private val ruleSet: RuleSet) {
             reasons.add("mb_payment_request")
             reasons.add("mb_has_entity_ref")
 
-            if (!multibancoData.valor.isNullOrBlank()) {
+            if (multibancoData.amountDetected || !multibancoData.valor.isNullOrBlank()) {
                 score += ruleSet.multibancoSignals.weights.hasAmount
                 reasons.add("mb_has_amount")
             }
@@ -123,7 +123,7 @@ class RiskEngine(private val ruleSet: RuleSet) {
             }
         }
 
-        val primaryBrand = BrandDetector.detectPrimaryBrand(normalizedMessage, matchedGroups)
+        val primaryBrand = BrandDetector.detectPrimaryBrand(normalizedText, matchedGroups)
         if (primaryBrand != null && !entityOwner.isNullOrBlank()) {
             val allowedOwners =
                 ruleSet.correlation.brandEntityMap[primaryBrand].orEmpty()
@@ -159,6 +159,10 @@ class RiskEngine(private val ruleSet: RuleSet) {
         }
 
         val mediumThreshold = ruleSet.scoring.thresholds.medium
+        if (multibancoData?.entityDetected == true && multibancoData.referenceDetected && score < mediumThreshold) {
+            score = mediumThreshold
+            reasons.add("mb_payment_request")
+        }
         if ("dataRequest" in matchedGroups && score < mediumThreshold) {
             score = mediumThreshold
             reasons.add("data_request_minimum_medium")
