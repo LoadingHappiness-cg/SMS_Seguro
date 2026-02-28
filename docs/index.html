@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Política de Privacidade — SMS Seguro</title>
+  <meta name="description" content="Política de Privacidade do SMS Seguro (Android). Deteção offline de burlas por SMS, sem recolha de dados pessoais." />
+  <style>
+    :root { color-scheme: light; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background: #0b1220; color: #e7eefc; }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 28px 18px 60px; }
+    .card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+    header { display: flex; gap: 14px; align-items: center; margin-bottom: 18px; }
+    header img { width: 56px; height: 56px; border-radius: 14px; background: rgba(255,255,255,0.08); padding: 8px; }
+    h1 { font-size: 22px; margin: 0; }
+    .sub { margin: 4px 0 0; opacity: 0.9; font-size: 14px; }
+    h2 { font-size: 16px; margin: 22px 0 10px; }
+    p, li { line-height: 1.55; font-size: 14.5px; }
+    ul { margin: 10px 0 0 18px; }
+    .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.14); font-size: 12px; }
+    a { color: #9dd2ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    footer { margin-top: 16px; opacity: 0.8; font-size: 12.5px; }
+    .note { margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.10); }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <header>
+        <img src="./assets/logo.png" alt="SMS Seguro logo" />
+        <div>
+          <h1>Política de Privacidade — SMS Seguro</h1>
+          <div class="sub">
+            <span class="pill">Deteção offline</span>
+            <span class="pill">Sem tracking</span>
+            <span class="pill">Open source</span>
+          </div>
+        </div>
+      </header>
+
+      <p>
+        O <strong>SMS Seguro</strong> é uma aplicação Android open source criada para ajudar a detetar mensagens SMS potencialmente fraudulentas (smishing),
+        com foco em padrões comuns em Portugal (ex.: links suspeitos, pedidos de pagamento Multibanco, pedidos de códigos).
+      </p>
+
+      <h2>1) Recolha de dados</h2>
+      <p><strong>O SMS Seguro não recolhe dados pessoais</strong> e não cria contas de utilizador.</p>
+      <ul>
+        <li>Não envia o conteúdo das mensagens para servidores.</li>
+        <li>Não utiliza analytics, publicidade ou tracking.</li>
+        <li>Não partilha dados com terceiros.</li>
+      </ul>
+
+      <h2>2) Acesso às Notificações</h2>
+      <p>
+        O SMS Seguro pode pedir <strong>Acesso às Notificações</strong> para conseguir analisar as notificações de SMS e avisar o utilizador quando deteta padrões suspeitos.
+        A análise é feita <strong>localmente</strong> no dispositivo.
+      </p>
+
+      <h2>3) Acesso à Internet</h2>
+      <p>
+        O acesso à Internet é usado apenas para descarregar <strong>regras de deteção</strong> (rulesets) que são <strong>assinadas criptograficamente</strong>.
+        Estas atualizações <strong>não</strong> incluem dados do utilizador nem conteúdo de mensagens.
+      </p>
+
+      <h2>4) Armazenamento local</h2>
+      <p>O SMS Seguro pode guardar localmente (no dispositivo):</p>
+      <ul>
+        <li>Histórico de deteções (eventos e razões).</li>
+        <li>Domínios marcados como seguros (se o utilizador o fizer).</li>
+        <li>Rulesets de deteção (incluindo a versão atual).</li>
+      </ul>
+      <p>Este conteúdo <strong>nunca sai do dispositivo</strong> e pode ser removido ao desinstalar a app.</p>
+
+      <h2>5) Segurança</h2>
+      <p>
+        As atualizações de regras são verificadas através de assinatura digital (ex.: <code>Ed25519</code>) para reduzir risco de adulteração.
+      </p>
+
+      <h2>6) Open source</h2>
+      <p>
+        Código-fonte: <a href="https://github.com/LoadingHappiness-cg/SMS_Seguro">https://github.com/LoadingHappiness-cg/SMS_Seguro</a>
+      </p>
+
+      <h2>7) Contacto</h2>
+      <p>
+        Loading Happiness — Portugal<br/>
+        Email: <em>(definir)</em>
+      </p>
+
+      <div class="note">
+        <strong>Última atualização:</strong> 2026-02-28
+      </div>
+
+      <footer>
+        Nota: Esta política pode ser atualizada se forem adicionadas novas funcionalidades. O princípio mantém-se: <strong>privacidade por defeito</strong>.
+      </footer>
+    </div>
+  </div>
+</body>
+</html>

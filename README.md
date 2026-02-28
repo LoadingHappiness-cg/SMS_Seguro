@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./assets/logo.png" alt="SMS Seguro" width="120" />
+</p>
+
 # SMS Seguro
 
 Proteção simples contra burlas por SMS.  
@@ -105,6 +109,14 @@ Se for detetado risco, a aplicação mostra um alerta claro.
 - Nenhum dado pessoal é recolhido
 - Funciona offline
 - Atualizações de regras são assinadas digitalmente
+
+---
+
+## Privacidade
+
+Política de Privacidade pública:
+
+https://loadinghappiness-cg.github.io/SMS_Seguro/
 
 ---
 
