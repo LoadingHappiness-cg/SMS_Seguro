@@ -56,6 +56,36 @@
 
     <!-- Alert screen -->
     <string name="alert_title">Alerta de segurança</string>
+    <string name="security_check_title">Verificação de segurança</string>
+    <string name="security_check_link_analyzed">Link analisado</string>
+    <string name="security_check_reasons_title">Motivos da análise</string>
+    <string name="analyzed_link_title">Link analisado</string>
+    <string name="analysis_reasons_title">Motivos da análise</string>
+    <string name="analysis_no_details">Sem detalhes adicionais.</string>
+    <string name="button_show">Ver</string>
+    <string name="button_hide">Ocultar</string>
+    <string name="button_continue">Continuar</string>
+    <string name="button_open_carefully">Abrir com cuidado</string>
+    <string name="button_block">Bloquear</string>
+    <string name="button_help">Pedir ajuda</string>
+    <string name="button_copy_link">Copiar link</string>
+    <string name="sender_label">Remetente</string>
+    <string name="score_label">Pontuação</string>
+    <string name="risk_label_low">Risco baixo</string>
+    <string name="risk_label_medium">Risco médio</string>
+    <string name="risk_label_high">Risco alto</string>
+    <string name="risk_low_message">O link parece seguro. Ainda assim, confirme antes de abrir.</string>
+    <string name="risk_medium_message">Este link pode ser suspeito. Abra apenas se confiar na origem.</string>
+    <string name="risk_high_message">Este link parece perigoso. Não abra.</string>
+    <string name="cd_risk_low">Baixo risco</string>
+    <string name="cd_risk_medium">Risco médio</string>
+    <string name="cd_risk_high">Risco alto</string>
+    <string name="preview_sender_amnistia">Amnistia Internacional</string>
+    <string name="preview_sender_ctt">CTT</string>
+    <string name="preview_sender_paypal">PayPal</string>
+    <string name="preview_domain_amnistia">amnistia.pt</string>
+    <string name="preview_domain_ctt">ctt-entrega-segura.online</string>
+    <string name="preview_domain_paypal">xn--pypal-3ve.com</string>
     <string name="alert_danger_detected">ALERTA DETETADO</string>
     <string name="alert_risk_level">Nível de risco: %1$s</string>
     <string name="alert_detected_link">Link detetado</string>
@@ -70,6 +100,11 @@
     <string name="help_share_request">Podes verificar se é seguro?</string>
     <string name="help_share_sender">Remetente: %1$s</string>
     <string name="help_share_full_message">Mensagem completa:</string>
+    <string name="toast_opening_suspicious_link">A abrir ligação suspeita</string>
+    <string name="toast_link_blocked">Ligação bloqueada</string>
+    <string name="toast_help_message">Peça ajuda a um familiar.</string>
+    <string name="toast_link_copied">Link copiado</string>
+    <string name="toast_cannot_open_link">Não foi possível abrir a ligação</string>
     <string name="unknown">Desconhecido</string>
 
     <!-- Notification channel -->

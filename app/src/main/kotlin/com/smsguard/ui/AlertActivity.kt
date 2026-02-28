@@ -1,16 +1,31 @@
 package com.smsguard.ui
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,7 +37,28 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smsguard.R
 import com.smsguard.core.AlertType
+import com.smsguard.core.RiskLevel
 import com.smsguard.ui.theme.SMSGuardTheme
+
+data class PrimaryLinkAction(
+    val shouldOpenUrl: Boolean,
+    @StringRes val toastMessageResId: Int?,
+)
+
+fun primaryLinkActionFor(riskLevel: RiskLevel): PrimaryLinkAction =
+    when (riskLevel) {
+        RiskLevel.LOW -> PrimaryLinkAction(shouldOpenUrl = true, toastMessageResId = null)
+        RiskLevel.MEDIUM ->
+            PrimaryLinkAction(
+                shouldOpenUrl = true,
+                toastMessageResId = R.string.toast_opening_suspicious_link,
+            )
+        RiskLevel.HIGH ->
+            PrimaryLinkAction(
+                shouldOpenUrl = false,
+                toastMessageResId = R.string.toast_link_blocked,
+            )
+    }
 
 class AlertActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,14 +78,18 @@ class AlertActivity : ComponentActivity() {
                 ?: 0
 
         val riskLevel =
-            intent.getStringExtra("level")
-                ?: intent.getStringExtra("risk_level")
-                ?: ""
+            runCatching {
+                RiskLevel.valueOf(
+                    intent.getStringExtra("level")
+                        ?: intent.getStringExtra("risk_level")
+                        ?: RiskLevel.MEDIUM.name,
+                )
+            }.getOrDefault(RiskLevel.MEDIUM)
 
         val reasons =
-            intent.getStringArrayListExtra("reasons")?.toTypedArray()
-                ?: intent.getStringArrayExtra("reasons")
-                ?: emptyArray()
+            intent.getStringArrayListExtra("reasons")?.toList()
+                ?: intent.getStringArrayExtra("reasons")?.toList()
+                ?: emptyList()
 
         val alertType =
             runCatching {
@@ -73,29 +113,68 @@ class AlertActivity : ComponentActivity() {
 
         setContent {
             SMSGuardTheme {
-                AlertScreen(
-                    alertType = alertType,
-                    riskLevel = riskLevel,
-                    domain = domain,
-                    sender = sender,
-                    score = score,
-                    reasons = reasons.toList(),
-                    mbEntidade = mbEntidade,
-                    mbReferencia = mbReferencia,
-                    mbValor = mbValor,
-                    onClose = { finish() },
-                    onHelp = {
-                        pedirAjuda(
-                            sender = sender,
-                            messageText = messageText,
-                            link = url,
-                            alertType = alertType,
-                            mbEntidade = mbEntidade,
-                            mbReferencia = mbReferencia,
-                            mbValor = mbValor
-                        )
-                    }
-                )
+                if (alertType == AlertType.MULTIBANCO) {
+                    MultibancoAlertScreen(
+                        sender = sender,
+                        score = score,
+                        reasons = reasons,
+                        mbEntidade = mbEntidade,
+                        mbReferencia = mbReferencia,
+                        mbValor = mbValor,
+                        onClose = { finish() },
+                        onHelp = {
+                            pedirAjuda(
+                                sender = sender,
+                                messageText = messageText,
+                                link = url,
+                                alertType = alertType,
+                                mbEntidade = mbEntidade,
+                                mbReferencia = mbReferencia,
+                                mbValor = mbValor,
+                            )
+                        },
+                    )
+                } else {
+                    SecurityCheckResultScreen(
+                        riskLevel = riskLevel,
+                        domain = domain,
+                        senderName = sender,
+                        score = score,
+                        reasons = reasons,
+                        onPrimary = {
+                            val action = primaryLinkActionFor(riskLevel)
+
+                            action.toastMessageResId?.let { resId ->
+                                Toast.makeText(this, getString(resId), Toast.LENGTH_LONG).show()
+                            }
+
+                            if (action.shouldOpenUrl) {
+                                openUrl(url)
+                            }
+
+                            finish()
+                        },
+                        onHelp = {
+                            Toast.makeText(
+                                this,
+                                getString(R.string.toast_help_message),
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        },
+                        onCopyLink = {
+                            if (url.isNotBlank()) {
+                                val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+                                val clip = ClipData.newPlainText("link", url)
+                                clipboard.setPrimaryClip(clip)
+                                Toast.makeText(
+                                    this,
+                                    getString(R.string.toast_link_copied),
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                        },
+                    )
+                }
             }
         }
     }
@@ -107,7 +186,7 @@ class AlertActivity : ComponentActivity() {
         alertType: AlertType,
         mbEntidade: String,
         mbReferencia: String,
-        mbValor: String?
+        mbValor: String?,
     ) {
         val safeLink = link.trim()
 
@@ -148,25 +227,31 @@ class AlertActivity : ComponentActivity() {
                 }
             }.trimEnd()
 
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, message)
-        }
+        val intent =
+            Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, message)
+            }
 
-        startActivity(
-            Intent.createChooser(
-                intent,
-                getString(R.string.ask_help)
-            )
-        )
+        startActivity(Intent.createChooser(intent, getString(R.string.ask_help)))
+    }
+
+    private fun openUrl(url: String) {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            startActivity(intent)
+        } catch (_: Exception) {
+            Toast.makeText(
+                this,
+                getString(R.string.toast_cannot_open_link),
+                Toast.LENGTH_LONG,
+            ).show()
+        }
     }
 }
 
 @Composable
-fun AlertScreen(
-    alertType: AlertType,
-    riskLevel: String,
-    domain: String,
+private fun MultibancoAlertScreen(
     sender: String,
     score: Int,
     reasons: List<String>,
@@ -174,155 +259,87 @@ fun AlertScreen(
     mbReferencia: String,
     mbValor: String?,
     onClose: () -> Unit,
-    onHelp: () -> Unit
+    onHelp: () -> Unit,
 ) {
-    val bgColor = if (riskLevel == "HIGH") Color(0xFFB71C1C) else Color(0xFFE65100)
-    val riskLabel =
-        when (riskLevel) {
-            "HIGH" -> stringResource(R.string.risk_high)
-            "MEDIUM" -> stringResource(R.string.risk_medium)
-            "LOW" -> stringResource(R.string.risk_low)
-            else -> stringResource(R.string.risk_unknown)
-        }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(bgColor)
+            .background(Color(0xFFE65100))
             .padding(24.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
-        Icon(
-            imageVector = Icons.Default.Warning,
-            contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier.size(80.dp)
-        )
-        
-        Spacer(modifier = Modifier.height(24.dp))
-
         Text(
-            text =
-                if (alertType == AlertType.MULTIBANCO)
-                    stringResource(R.string.mb_payment_title)
-                else
-                    stringResource(R.string.alert_danger_detected),
+            text = stringResource(R.string.mb_payment_title),
             color = Color.White,
-            fontSize = if (alertType == AlertType.MULTIBANCO) 28.sp else 32.sp,
+            fontSize = 28.sp,
             fontWeight = FontWeight.Black,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
-        
-        if (alertType != AlertType.MULTIBANCO) {
-            Text(
-                text = stringResource(R.string.alert_risk_level, riskLabel),
-                color = Color.White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
 
         Spacer(modifier = Modifier.height(32.dp))
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f))
+            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                if (alertType == AlertType.MULTIBANCO) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                if (mbEntidade.isNotBlank()) {
                     Text(
-                        text = stringResource(R.string.mb_payment_title),
-                        fontWeight = FontWeight.Bold,
+                        text = "${stringResource(R.string.mb_entity)}: $mbEntidade",
                         fontSize = 18.sp,
-                        color = Color.Black
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    if (mbEntidade.isNotBlank()) {
-                        Text(
-                            text = "${stringResource(R.string.mb_entity)}: $mbEntidade",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFB71C1C)
-                        )
-                    }
-                    if (mbReferencia.isNotBlank()) {
-                        Text(
-                            text = "${stringResource(R.string.mb_reference)}: $mbReferencia",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFB71C1C)
-                        )
-                    }
-                    if (!mbValor.isNullOrBlank()) {
-                        Text(
-                            text = "${stringResource(R.string.mb_amount)}: $mbValor€",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFB71C1C)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = stringResource(R.string.mb_warning_line1),
-                        fontSize = 16.sp,
-                        color = Color.DarkGray
-                    )
-                    Text(
-                        text = stringResource(R.string.mb_warning_line2),
-                        fontSize = 16.sp,
-                        color = Color.DarkGray
-                    )
-                    Text(
-                        text = stringResource(R.string.mb_warning_line3),
-                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.DarkGray
-                    )
-                } else {
-                    Text(
-                        text = stringResource(R.string.alert_detected_link),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = Color.Black
-                    )
-                    Text(
-                        text = domain,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFB71C1C)
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "${stringResource(R.string.alert_sender)}: $sender",
-                        fontSize = 16.sp,
-                        color = Color.DarkGray
-                    )
-
-                    Text(
-                        text = "${stringResource(R.string.alert_score)}: $score",
-                        fontSize = 16.sp,
-                        color = Color.DarkGray
+                        color = Color(0xFFB71C1C),
                     )
                 }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
+                if (mbReferencia.isNotBlank()) {
+                    Text(
+                        text = "${stringResource(R.string.mb_reference)}: $mbReferencia",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFB71C1C),
+                    )
+                }
+                if (!mbValor.isNullOrBlank()) {
+                    Text(
+                        text = "${stringResource(R.string.mb_amount)}: $mbValor€",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFB71C1C),
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "${stringResource(R.string.alert_sender)}: $sender",
+                    fontSize = 16.sp,
+                    color = Color.DarkGray,
+                )
+                Text(
+                    text = "${stringResource(R.string.alert_score)}: $score",
+                    fontSize = 16.sp,
+                    color = Color.DarkGray,
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Text(
                     text = stringResource(R.string.alert_reasons),
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
-                    color = Color.Black
+                    color = Color.Black,
                 )
                 reasons.forEach { reason ->
-                    Text(text = "• ${reasonLabel(reason)}", fontSize = 18.sp, color = Color.DarkGray)
+                    Text(
+                        text = "\u2022 ${reasonLabel(reason)}",
+                        fontSize = 18.sp,
+                        color = Color.DarkGray,
+                    )
                 }
             }
         }
@@ -331,8 +348,10 @@ fun AlertScreen(
 
         Button(
             onClick = onHelp,
-            modifier = Modifier.fillMaxWidth().height(64.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(64.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black),
         ) {
             Text(stringResource(R.string.ask_help), fontSize = 20.sp, fontWeight = FontWeight.Black)
         }
@@ -341,48 +360,10 @@ fun AlertScreen(
 
         TextButton(onClick = onClose) {
             Text(
-                stringResource(R.string.alert_close),
+                text = stringResource(R.string.alert_close),
                 color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.labelLarge,
             )
         }
     }
 }
-
-@Composable
-private fun reasonLabel(code: String): String =
-    when (code) {
-        "keyword_urgency" -> stringResource(R.string.reason_keyword_urgency)
-        "keyword_threat" -> stringResource(R.string.reason_keyword_threat)
-        "keyword_payment" -> stringResource(R.string.reason_keyword_payment)
-        "keyword_dataRequest" -> stringResource(R.string.reason_keyword_data_request)
-        "keyword_publicServices" -> stringResource(R.string.reason_keyword_public_services)
-        "keyword_delivery" -> stringResource(R.string.reason_keyword_delivery)
-        "keyword_banking" -> stringResource(R.string.reason_keyword_banking)
-        "url_present" -> stringResource(R.string.reason_url_present)
-        "url_shortener" -> stringResource(R.string.reason_shortener)
-        "url_suspicious_tld" -> stringResource(R.string.reason_suspicious_tld)
-        "url_punycode" -> stringResource(R.string.reason_punycode)
-        "url_non_latin_hostname" -> stringResource(R.string.reason_non_latin_hostname)
-        "url_mixed_latin_cyrillic" -> stringResource(R.string.reason_mixed_latin_cyrillic)
-        "mb_payment_request" -> stringResource(R.string.reason_multibanco_payment)
-        "mb_has_entity_ref" -> stringResource(R.string.reason_mb_entity_reference)
-        "mb_has_amount" -> stringResource(R.string.reason_mb_amount)
-        "mb_unknown_entity" -> stringResource(R.string.reason_mb_unknown_entity)
-        "mb_intermediary_entity" -> stringResource(R.string.reason_mb_intermediary_entity)
-        "mb_known_entity" -> stringResource(R.string.reason_mb_known_entity)
-        "correlation_brand_entity_mismatch" -> stringResource(R.string.reason_brand_entity_mismatch)
-        "correlation_brand_url_mismatch" -> stringResource(R.string.reason_brand_url_mismatch)
-        "data_request_minimum_medium" -> stringResource(R.string.reason_data_request_minimum_medium)
-        "non_latin_url_minimum_medium" -> stringResource(R.string.reason_non_latin_url_minimum_medium)
-        "safe_domain" -> stringResource(R.string.reason_safe_domain)
-        "shortener" -> stringResource(R.string.reason_shortener)
-        "suspicious_tld" -> stringResource(R.string.reason_suspicious_tld)
-        "punycode" -> stringResource(R.string.reason_punycode)
-        "trigger_words" -> stringResource(R.string.reason_trigger_words)
-        "brand_impersonation" -> stringResource(R.string.reason_brand_impersonation)
-        "weird_structure" -> stringResource(R.string.reason_weird_structure)
-        "multibanco_payment" -> stringResource(R.string.reason_multibanco_payment)
-        else -> code
-    }

@@ -11,19 +11,6 @@ import com.smsguard.R
 
 class SmsNotificationListener : NotificationListenerService() {
 
-    private val supportedPackages = setOf(
-        "com.google.android.apps.messaging",
-        "com.android.messaging",
-        "com.samsung.android.messaging",
-        "com.android.mms",
-
-        // Xiaomi / MIUI variants (some regions still ship a Xiaomi-branded SMS app)
-        "com.miui.mms",
-        "com.miui.sms",
-        "com.xiaomi.mms",
-        "com.xiaomi.sms",
-    )
-
     override fun onListenerConnected() {
         super.onListenerConnected()
         Log.d("SMS_SEGURO", "Notification listener connected")
@@ -41,11 +28,8 @@ class SmsNotificationListener : NotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         try {
-            val isLikelyMessageNotification = sbn.notification.category == Notification.CATEGORY_MESSAGE
-
-            if (!supportedPackages.contains(sbn.packageName) && !isLikelyMessageNotification) {
-                return
-            }
+            val pkg = sbn.packageName ?: return
+            if (!SmsSourceAllowlist.isAllowed(applicationContext, pkg)) return
 
             val extras = sbn.notification.extras
             val title =
@@ -65,7 +49,7 @@ class SmsNotificationListener : NotificationListenerService() {
                 sender = title,
                 rawText = fullText,
                 source = "notification_listener",
-                packageName = sbn.packageName,
+                packageName = pkg,
             )
         } catch (e: Exception) {
             Log.e("SMS_SEGURO", "Error while processing SMS notification", e)

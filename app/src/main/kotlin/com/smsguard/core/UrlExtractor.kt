@@ -25,19 +25,24 @@ object UrlExtractor {
     }
 
     fun getDomain(url: String): String {
-        val domainFromUri =
-            runCatching {
-                java.net.URI(url).host
-            }.getOrNull()
+        return extractHostTolerant(url).orEmpty().removePrefix("www.")
+    }
 
-        val domainFromUrl =
-            if (domainFromUri.isNullOrBlank()) {
-                runCatching { java.net.URL(url).host }.getOrNull()
-            } else {
-                null
-            }
+    fun extractHostTolerant(url: String): String? {
+        val strictUrlHost =
+            runCatching { java.net.URL(url).host }
+                .getOrNull()
+                ?.takeIf { it.isNotBlank() }
+        if (strictUrlHost != null) return strictUrlHost
 
-        val domain = (domainFromUri ?: domainFromUrl).orEmpty()
-        return domain.removePrefix("www.")
+        val strictUriHost =
+            runCatching { java.net.URI(url).host }
+                .getOrNull()
+                ?.takeIf { it.isNotBlank() }
+        if (strictUriHost != null) return strictUriHost
+
+        val match = Regex("^[a-zA-Z][a-zA-Z0-9+.-]*://([^/\\s?#]+)").find(url)
+        val hostPort = match?.groupValues?.getOrNull(1) ?: return null
+        return hostPort.substringBefore(':')
     }
 }
