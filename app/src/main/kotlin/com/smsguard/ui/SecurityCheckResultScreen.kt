@@ -29,10 +29,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,6 +43,8 @@ import com.smsguard.R
 import com.smsguard.core.RiskLevel
 import com.smsguard.ui.theme.SMSGuardTheme
 import androidx.annotation.StringRes
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 @Immutable
 data class SecurityCheckResultUi(
@@ -65,9 +65,9 @@ enum class SecurityStatusTone {
 data class SecurityCheckContent(
     val tone: SecurityStatusTone,
     @StringRes val chipLabelResId: Int,
-    @StringRes val headlineResId: Int,
     @StringRes val supportingMessageResId: Int,
     @StringRes val primaryActionLabelResId: Int,
+    @StringRes val primaryCaptionResId: Int,
     val showsCopyLinkAction: Boolean,
 )
 
@@ -75,9 +75,9 @@ data class SecurityCheckContent(
 private data class RiskUiSpec(
     val icon: @Composable () -> Unit,
     val chipLabel: String,
-    val headline: String,
     val message: String,
     val primaryCta: String,
+    val primaryCaption: String,
     val chipContainer: @Composable (ColorScheme) -> Color,
     val chipContent: @Composable (ColorScheme) -> Color,
 )
@@ -88,28 +88,28 @@ fun securityCheckContentFor(riskLevel: RiskLevel): SecurityCheckContent =
             SecurityCheckContent(
                 tone = SecurityStatusTone.CALM,
                 chipLabelResId = R.string.risk_label_low,
-                headlineResId = R.string.security_check_title,
                 supportingMessageResId = R.string.risk_low_message,
-                primaryActionLabelResId = R.string.button_continue,
-                showsCopyLinkAction = true,
+                primaryActionLabelResId = R.string.security_check_action_open_browser,
+                primaryCaptionResId = R.string.security_check_caption_will_open_browser,
+                showsCopyLinkAction = false,
             )
         RiskLevel.MEDIUM ->
             SecurityCheckContent(
                 tone = SecurityStatusTone.ATTENTION,
                 chipLabelResId = R.string.risk_label_medium,
-                headlineResId = R.string.security_check_title,
                 supportingMessageResId = R.string.risk_medium_message,
-                primaryActionLabelResId = R.string.button_open_carefully,
-                showsCopyLinkAction = true,
+                primaryActionLabelResId = R.string.security_check_action_open_carefully,
+                primaryCaptionResId = R.string.security_check_caption_will_open_browser,
+                showsCopyLinkAction = false,
             )
         RiskLevel.HIGH ->
             SecurityCheckContent(
                 tone = SecurityStatusTone.DANGER,
                 chipLabelResId = R.string.risk_label_high,
-                headlineResId = R.string.security_check_title,
                 supportingMessageResId = R.string.risk_high_message,
-                primaryActionLabelResId = R.string.button_block,
-                showsCopyLinkAction = true,
+                primaryActionLabelResId = R.string.security_check_action_block_link,
+                primaryCaptionResId = R.string.security_check_caption_will_not_open,
+                showsCopyLinkAction = false,
             )
     }
 
@@ -129,9 +129,9 @@ private fun riskUiSpec(level: RiskLevel): RiskUiSpec {
                     )
                 },
                 chipLabel = stringResource(content.chipLabelResId),
-                headline = stringResource(content.headlineResId),
                 message = stringResource(content.supportingMessageResId),
                 primaryCta = stringResource(content.primaryActionLabelResId),
+                primaryCaption = stringResource(content.primaryCaptionResId),
                 chipContainer = { cs -> cs.primaryContainer },
                 chipContent = { cs -> cs.onPrimaryContainer },
             )
@@ -146,9 +146,9 @@ private fun riskUiSpec(level: RiskLevel): RiskUiSpec {
                     )
                 },
                 chipLabel = stringResource(content.chipLabelResId),
-                headline = stringResource(content.headlineResId),
                 message = stringResource(content.supportingMessageResId),
                 primaryCta = stringResource(content.primaryActionLabelResId),
+                primaryCaption = stringResource(content.primaryCaptionResId),
                 chipContainer = { cs -> cs.tertiaryContainer },
                 chipContent = { cs -> cs.onTertiaryContainer },
             )
@@ -163,9 +163,9 @@ private fun riskUiSpec(level: RiskLevel): RiskUiSpec {
                     )
                 },
                 chipLabel = stringResource(content.chipLabelResId),
-                headline = stringResource(content.headlineResId),
                 message = stringResource(content.supportingMessageResId),
                 primaryCta = stringResource(content.primaryActionLabelResId),
+                primaryCaption = stringResource(content.primaryCaptionResId),
                 chipContainer = { cs -> cs.errorContainer },
                 chipContent = { cs -> cs.onErrorContainer },
             )
@@ -181,8 +181,8 @@ fun SecurityCheckResultScreen(
     score: Int,
     reasons: List<String>,
     onPrimary: () -> Unit,
+    onDismiss: () -> Unit,
     onHelp: () -> Unit,
-    onCopyLink: (() -> Unit)? = null,
     title: String? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -206,9 +206,10 @@ fun SecurityCheckResultScreen(
             BottomActionBar(
                 riskLevel = riskLevel,
                 primaryLabel = ui.primaryCta,
+                primaryCaption = ui.primaryCaption,
                 onPrimary = onPrimary,
+                onDismiss = onDismiss,
                 onHelp = onHelp,
-                onCopyLink = onCopyLink,
             )
         },
     ) { innerPadding ->
@@ -237,12 +238,6 @@ fun SecurityCheckResultScreen(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Text(
-                            text = ui.headline,
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-
                         StatusChip(
                             label = ui.chipLabel,
                             containerColor = ui.chipContainer(MaterialTheme.colorScheme),
@@ -343,9 +338,10 @@ fun SecurityCheckResultScreen(
 private fun BottomActionBar(
     riskLevel: RiskLevel,
     primaryLabel: String,
+    primaryCaption: String,
     onPrimary: () -> Unit,
+    onDismiss: () -> Unit,
     onHelp: () -> Unit,
-    onCopyLink: (() -> Unit)?,
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surface,
@@ -390,22 +386,27 @@ private fun BottomActionBar(
                     }
             }
 
+            Text(
+                text = primaryCaption,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+            ) {
+                Text(stringResource(R.string.security_check_action_ignore_exit))
+            }
+
             TextButton(
                 onClick = onHelp,
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large,
             ) {
-                Text(stringResource(R.string.button_help))
-            }
-
-            if (onCopyLink != null) {
-                TextButton(
-                    onClick = onCopyLink,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.large,
-                ) {
-                    Text(stringResource(R.string.button_copy_link))
-                }
+                Text(stringResource(R.string.security_check_action_ask_help))
             }
         }
     }
@@ -479,40 +480,49 @@ private fun ReasonBullet(text: String) {
 
 @Composable
 internal fun reasonLabel(code: String): String =
+    reasonLabelResId(code)?.let { stringResource(it) } ?: code
+
+@StringRes
+internal fun reasonLabelResId(code: String): Int? =
     when (code) {
-        "keyword_urgency" -> androidx.compose.ui.res.stringResource(R.string.reason_keyword_urgency)
-        "keyword_threat" -> androidx.compose.ui.res.stringResource(R.string.reason_keyword_threat)
-        "keyword_payment" -> androidx.compose.ui.res.stringResource(R.string.reason_keyword_payment)
-        "keyword_dataRequest" -> androidx.compose.ui.res.stringResource(R.string.reason_keyword_data_request)
-        "keyword_publicServices" -> androidx.compose.ui.res.stringResource(R.string.reason_keyword_public_services)
-        "keyword_delivery" -> androidx.compose.ui.res.stringResource(R.string.reason_keyword_delivery)
-        "keyword_banking" -> androidx.compose.ui.res.stringResource(R.string.reason_keyword_banking)
-        "url_present" -> androidx.compose.ui.res.stringResource(R.string.reason_url_present)
-        "url_shortener" -> androidx.compose.ui.res.stringResource(R.string.reason_shortener)
-        "url_suspicious_tld" -> androidx.compose.ui.res.stringResource(R.string.reason_suspicious_tld)
-        "url_punycode" -> androidx.compose.ui.res.stringResource(R.string.reason_punycode)
-        "url_non_latin_hostname" -> androidx.compose.ui.res.stringResource(R.string.reason_non_latin_hostname)
-        "url_mixed_latin_cyrillic" -> androidx.compose.ui.res.stringResource(R.string.reason_mixed_latin_cyrillic)
-        "mb_payment_request" -> androidx.compose.ui.res.stringResource(R.string.reason_multibanco_payment)
-        "mb_has_entity_ref" -> androidx.compose.ui.res.stringResource(R.string.reason_mb_entity_reference)
-        "mb_has_amount" -> androidx.compose.ui.res.stringResource(R.string.reason_mb_amount)
-        "mb_unknown_entity" -> androidx.compose.ui.res.stringResource(R.string.reason_mb_unknown_entity)
-        "mb_intermediary_entity" -> androidx.compose.ui.res.stringResource(R.string.reason_mb_intermediary_entity)
-        "mb_known_entity" -> androidx.compose.ui.res.stringResource(R.string.reason_mb_known_entity)
-        "correlation_brand_entity_mismatch" -> androidx.compose.ui.res.stringResource(R.string.reason_brand_entity_mismatch)
-        "correlation_brand_url_mismatch" -> androidx.compose.ui.res.stringResource(R.string.reason_brand_url_mismatch)
-        "data_request_minimum_medium" -> androidx.compose.ui.res.stringResource(R.string.reason_data_request_minimum_medium)
-        "non_latin_url_minimum_medium" -> androidx.compose.ui.res.stringResource(R.string.reason_non_latin_url_minimum_medium)
-        "safe_domain" -> androidx.compose.ui.res.stringResource(R.string.reason_safe_domain)
-        "shortener" -> androidx.compose.ui.res.stringResource(R.string.reason_shortener)
-        "suspicious_tld" -> androidx.compose.ui.res.stringResource(R.string.reason_suspicious_tld)
-        "punycode" -> androidx.compose.ui.res.stringResource(R.string.reason_punycode)
-        "trigger_words" -> androidx.compose.ui.res.stringResource(R.string.reason_trigger_words)
-        "brand_impersonation" -> androidx.compose.ui.res.stringResource(R.string.reason_brand_impersonation)
-        "weird_structure" -> androidx.compose.ui.res.stringResource(R.string.reason_weird_structure)
-        "multibanco_payment" -> androidx.compose.ui.res.stringResource(R.string.reason_multibanco_payment)
-        else -> code
+        "keyword_urgency" -> R.string.reason_keyword_urgency
+        "keyword_threat" -> R.string.reason_keyword_threat
+        "keyword_payment" -> R.string.reason_keyword_payment
+        "keyword_dataRequest" -> R.string.reason_keyword_data_request
+        "keyword_publicServices" -> R.string.reason_keyword_public_services
+        "keyword_delivery" -> R.string.reason_keyword_delivery
+        "keyword_banking" -> R.string.reason_keyword_banking
+        "url_present" -> R.string.reason_url_present
+        "url_shortener" -> R.string.reason_shortener
+        "url_suspicious_tld" -> R.string.reason_suspicious_tld
+        "url_punycode" -> R.string.reason_punycode
+        "url_non_latin_hostname" -> R.string.reason_non_latin_hostname
+        "url_mixed_latin_cyrillic" -> R.string.reason_mixed_latin_cyrillic
+        "mb_payment_request" -> R.string.reason_multibanco_payment
+        "mb_has_entity_ref" -> R.string.reason_mb_entity_reference
+        "mb_has_amount" -> R.string.reason_mb_amount
+        "mb_unknown_entity" -> R.string.reason_mb_unknown_entity
+        "mb_intermediary_entity" -> R.string.reason_mb_intermediary_entity
+        "mb_known_entity" -> R.string.reason_mb_known_entity
+        "correlation_brand_entity_mismatch" -> R.string.reason_brand_entity_mismatch
+        "correlation_brand_url_mismatch" -> R.string.reason_brand_url_mismatch
+        "data_request_minimum_medium" -> R.string.reason_data_request_minimum_medium
+        "non_latin_url_minimum_medium" -> R.string.reason_non_latin_url_minimum_medium
+        "safe_domain" -> R.string.reason_safe_domain
+        "shortener" -> R.string.reason_shortener
+        "suspicious_tld" -> R.string.reason_suspicious_tld
+        "punycode" -> R.string.reason_punycode
+        "trigger_words" -> R.string.reason_trigger_words
+        "brand_impersonation" -> R.string.reason_brand_impersonation
+        "weird_structure" -> R.string.reason_weird_structure
+        "multibanco_payment" -> R.string.reason_multibanco_payment
+        else -> null
     }
+
+internal fun reasonLabelText(
+    code: String,
+    resolve: (Int) -> String,
+): String = reasonLabelResId(code)?.let(resolve) ?: code
 
 @Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
@@ -525,8 +535,8 @@ private fun PreviewLow() {
             score = 20,
             reasons = listOf("safe_domain", "url_present"),
             onPrimary = {},
+            onDismiss = {},
             onHelp = {},
-            onCopyLink = {},
         )
     }
 }
@@ -542,8 +552,8 @@ private fun PreviewMedium() {
             score = 55,
             reasons = listOf("correlation_brand_url_mismatch", "keyword_urgency"),
             onPrimary = {},
+            onDismiss = {},
             onHelp = {},
-            onCopyLink = {},
         )
     }
 }
@@ -559,8 +569,8 @@ private fun PreviewHigh() {
             score = 92,
             reasons = listOf("url_punycode", "keyword_dataRequest"),
             onPrimary = {},
+            onDismiss = {},
             onHelp = {},
-            onCopyLink = {},
         )
     }
 }
@@ -576,8 +586,8 @@ private fun PreviewLowProjectTheme() {
             score = 20,
             reasons = listOf("safe_domain", "url_present"),
             onPrimary = {},
+            onDismiss = {},
             onHelp = {},
-            onCopyLink = {},
         )
     }
 }

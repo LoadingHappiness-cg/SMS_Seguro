@@ -1,7 +1,5 @@
 package com.smsguard.ui
 
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -44,6 +42,49 @@ data class PrimaryLinkAction(
     val shouldOpenUrl: Boolean,
     @StringRes val toastMessageResId: Int?,
 )
+
+@StringRes
+fun helpShareTemplateResIdFor(riskLevel: RiskLevel): Int =
+    when (riskLevel) {
+        RiskLevel.LOW -> R.string.help_share_template_low
+        RiskLevel.MEDIUM -> R.string.help_share_template_medium
+        RiskLevel.HIGH -> R.string.help_share_template_high
+    }
+
+fun summarizeHelpReasons(
+    reasons: List<String>,
+    maxItems: Int = 3,
+): String =
+    reasons
+        .asSequence()
+        .map(String::trim)
+        .filter(String::isNotBlank)
+        .take(maxItems)
+        .joinToString(separator = "; ")
+
+fun buildHelpShareMessage(
+    intro: String,
+    domainLabel: String,
+    domain: String,
+    missingDomain: String,
+    senderLabel: String,
+    sender: String,
+    scoreLabel: String,
+    score: Int,
+    reasonsLabel: String,
+    reasonsSummary: String,
+    noClickNote: String,
+    question: String,
+): String =
+    buildList {
+        add(intro)
+        add("$domainLabel: ${domain.ifBlank { missingDomain }}")
+        sender.trim().takeIf { it.isNotEmpty() }?.let { add("$senderLabel: $it") }
+        add("$scoreLabel: $score")
+        reasonsSummary.takeIf { it.isNotBlank() }?.let { add("$reasonsLabel: $it") }
+        add(noClickNote)
+        add(question)
+    }.joinToString(separator = "\n")
 
 fun primaryLinkActionFor(riskLevel: RiskLevel): PrimaryLinkAction =
     when (riskLevel) {
@@ -154,24 +195,15 @@ class AlertActivity : ComponentActivity() {
 
                             finish()
                         },
+                        onDismiss = { finish() },
                         onHelp = {
-                            Toast.makeText(
-                                this,
-                                getString(R.string.toast_help_message),
-                                Toast.LENGTH_LONG,
-                            ).show()
-                        },
-                        onCopyLink = {
-                            if (url.isNotBlank()) {
-                                val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-                                val clip = ClipData.newPlainText("link", url)
-                                clipboard.setPrimaryClip(clip)
-                                Toast.makeText(
-                                    this,
-                                    getString(R.string.toast_link_copied),
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                            }
+                            shareSecurityCheckHelp(
+                                riskLevel = riskLevel,
+                                domain = domain,
+                                sender = sender,
+                                score = score,
+                                reasons = reasons,
+                            )
                         },
                     )
                 }
@@ -234,6 +266,46 @@ class AlertActivity : ComponentActivity() {
             }
 
         startActivity(Intent.createChooser(intent, getString(R.string.ask_help)))
+    }
+
+    private fun shareSecurityCheckHelp(
+        riskLevel: RiskLevel,
+        domain: String,
+        sender: String,
+        score: Int,
+        reasons: List<String>,
+    ) {
+        val displayReasons =
+            summarizeHelpReasons(
+                reasons = reasons.map { reason -> reasonLabelText(reason) { getString(it) } },
+            )
+
+        val message =
+            buildHelpShareMessage(
+                intro = getString(helpShareTemplateResIdFor(riskLevel)),
+                domainLabel = getString(R.string.help_share_domain_label),
+                domain = domain.trim(),
+                missingDomain = getString(R.string.help_share_domain_missing),
+                senderLabel = getString(R.string.sender_label),
+                sender = sender.takeUnless { it == getString(R.string.unknown) }.orEmpty(),
+                scoreLabel = getString(R.string.score_label),
+                score = score,
+                reasonsLabel = getString(R.string.help_share_reasons_label),
+                reasonsSummary = displayReasons,
+                noClickNote = getString(R.string.help_share_no_click_note),
+                question = getString(R.string.help_share_request_confirmation),
+            )
+
+        val intent =
+            Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_SUBJECT, getString(R.string.help_share_subject))
+                putExtra(Intent.EXTRA_TEXT, message)
+            }
+
+        startActivity(
+            Intent.createChooser(intent, getString(R.string.help_share_chooser_title)),
+        )
     }
 
     private fun openUrl(url: String) {
