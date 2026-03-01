@@ -1,5 +1,6 @@
 package com.smsguard.core
 
+import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Context
 import android.os.Build
@@ -7,6 +8,22 @@ import android.os.PowerManager
 import android.provider.Settings
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.smsguard.notification.AlertNotifierChannels
+import com.smsguard.notification.ForegroundServiceNotifier
+
+data class ProtectionStatusReport(
+    val listenerOk: Boolean,
+    val notificationsAllowed: Boolean,
+    val postNotificationsOk: Boolean,
+    val alertChannelOk: Boolean,
+    val foregroundNotificationAllowed: Boolean,
+) {
+    val alertsReady: Boolean
+        get() = notificationsAllowed && postNotificationsOk && alertChannelOk
+
+    val isReady: Boolean
+        get() = listenerOk && alertsReady && foregroundNotificationAllowed
+}
 
 class PermissionHealth(
     private val context: Context,
@@ -22,12 +39,6 @@ class PermissionHealth(
 
     val notificationsEnabled: Boolean
         get() = NotificationManagerCompat.from(context).areNotificationsEnabled()
-
-    val hasReceiveSmsPermission: Boolean
-        get() = ContextCompat.checkSelfPermission(
-            context,
-            android.Manifest.permission.RECEIVE_SMS,
-        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
     val hasNotificationListenerAccess: Boolean
         get() {
@@ -54,8 +65,63 @@ class PermissionHealth(
             return pm.isIgnoringBatteryOptimizations(context.packageName)
         }
 
+    val alertChannelOk: Boolean
+        get() {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return true
+
+            val notificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                    ?: return false
+
+            val channel = notificationManager.getNotificationChannel(AlertNotifierChannels.CHANNEL_ID)
+                ?: return false
+
+            return channel.importance != NotificationManager.IMPORTANCE_NONE
+        }
+
+    val foregroundNotificationChannelOk: Boolean
+        get() {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return true
+
+            val notificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                    ?: return false
+
+            val channel = notificationManager.getNotificationChannel(ForegroundServiceNotifier.CHANNEL_ID)
+                ?: return false
+
+            return channel.importance != NotificationManager.IMPORTANCE_NONE
+        }
+
+    fun isForegroundNotificationAllowed(): Boolean {
+        return notificationsEnabled && !needsPostNotifications && foregroundNotificationChannelOk
+    }
+
+    fun protectionStatusReport(): ProtectionStatusReport =
+        protectionStatusReport(
+            listenerOk = hasNotificationListenerAccess,
+            notificationsAllowed = notificationsEnabled,
+            postNotificationsOk = !needsPostNotifications,
+            alertChannelOk = alertChannelOk,
+            foregroundNotificationAllowed = isForegroundNotificationAllowed(),
+        )
+
     fun isProtectionReady(): Boolean {
-        val notificationsOk = !needsPostNotifications && notificationsEnabled
-        return notificationsOk && hasNotificationListenerAccess
+        return protectionStatusReport().isReady
     }
 }
+
+internal fun protectionStatusReport(
+    listenerOk: Boolean,
+    notificationsAllowed: Boolean,
+    postNotificationsOk: Boolean,
+    alertChannelOk: Boolean,
+    foregroundNotificationAllowed: Boolean,
+): ProtectionStatusReport =
+    ProtectionStatusReport(
+        listenerOk = listenerOk,
+        notificationsAllowed = notificationsAllowed,
+        postNotificationsOk = postNotificationsOk,
+        alertChannelOk = alertChannelOk,
+        foregroundNotificationAllowed = foregroundNotificationAllowed,
+    )

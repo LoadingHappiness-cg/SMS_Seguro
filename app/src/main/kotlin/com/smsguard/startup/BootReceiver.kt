@@ -6,7 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.service.notification.NotificationListenerService
-import android.util.Log
+import com.smsguard.core.AppLogger
 import com.smsguard.notification.SmsNotificationListener
 import com.smsguard.update.RuleUpdateScheduler
 
@@ -18,7 +18,7 @@ class BootReceiver : BroadcastReceiver() {
             Intent.ACTION_LOCKED_BOOT_COMPLETED,
             Intent.ACTION_MY_PACKAGE_REPLACED,
             "android.intent.action.QUICKBOOT_POWERON" -> {
-                Log.d("SMS_SEGURO", "Boot/package event received: ${intent.action}")
+                AppLogger.d("Boot/package event received: ${intent.action}")
                 RuleUpdateScheduler.schedulePeriodic(context)
                 requestNotificationListenerRebind(context)
                 startProtectionService(context)
@@ -33,7 +33,7 @@ class BootReceiver : BroadcastReceiver() {
                 NotificationListenerService.requestRebind(component)
             }
         } catch (e: Exception) {
-            Log.e("SMS_SEGURO", "Failed to rebind notification listener after boot", e)
+            AppLogger.e("Failed to rebind notification listener after boot", e)
         }
     }
 

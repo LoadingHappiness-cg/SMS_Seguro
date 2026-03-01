@@ -124,9 +124,45 @@ https://loadinghappiness-cg.github.io/SMS_Seguro/
 
 ### APK (versão de testes)
 
-`app/build/outputs/apk/debug/app-debug.apk`
+`app/build/outputs/apk/debug/sms-seguro-0.1.1-alpha.apk`
 
 Instalar manualmente no Android.
+
+## Publicar na Play
+
+### Gerar AAB
+
+A Google Play usa AAB, não APK.
+
+```bash
+./gradlew :app:bundleRelease
+```
+
+Output esperado:
+
+`app/build/outputs/bundle/release/app-release.aab`
+
+### Signing (Play App Signing)
+
+- Use Play App Signing com uma upload key.
+- A keystore deve ficar fora do repositório.
+- O local recomendado para credenciais locais é `~/.gradle/gradle.properties`.
+- `local.properties` pode ser usado apenas se não houver alternativa, e nunca deve ser commitado.
+- Não guarde paths absolutos sensíveis nem passwords no repo.
+
+## Release checks
+
+```bash
+./gradlew :app:testDebugUnitTest
+./gradlew :app:lintDebug
+./gradlew :app:assembleRelease
+./gradlew :app:bundleRelease
+```
+
+Paths úteis:
+
+- APK release para testes: `app/build/outputs/apk/release/sms-seguro-0.1.1-alpha.apk`
+- AAB para Play: `app/build/outputs/bundle/release/app-release.aab`
 
 ---
 

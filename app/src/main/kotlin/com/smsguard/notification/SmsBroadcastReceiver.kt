@@ -5,7 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Telephony
 import android.telephony.SmsMessage
-import android.util.Log
+import com.smsguard.core.AppLogger
+import com.smsguard.core.UrlExtractor
 
 class SmsBroadcastReceiver : BroadcastReceiver() {
 
@@ -34,9 +35,25 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
         }
 
         val messageText = textBuilder.toString().trim()
-        if (messageText.isBlank()) return
+        if (messageText.isBlank()) {
+            AppLogger.w("ProbeA intake dropped source=sms_broadcast reason=blank_message")
+            return
+        }
 
         try {
+            val primaryDomain =
+                UrlExtractor.extractUrls(messageText)
+                    .firstOrNull()
+                    ?.let(UrlExtractor::getDomain)
+                    .orEmpty()
+
+            AppLogger.d("ProbeA event received source=sms_broadcast package=telephony domain=$primaryDomain timestamp=${System.currentTimeMillis()}")
+            AlertPipelineDiagnostics.recordEvent(
+                context = context.applicationContext,
+                source = "sms_broadcast",
+                packageName = "telephony",
+            )
+
             SmsEventProcessor.process(
                 context = context.applicationContext,
                 sender = sender.ifBlank { "SMS" },
@@ -45,8 +62,7 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
                 packageName = "telephony",
             )
         } catch (e: Exception) {
-            Log.e("SMS_SEGURO", "Error processing SMS broadcast", e)
+            AppLogger.e("Error processing SMS broadcast", e)
         }
     }
 }
-

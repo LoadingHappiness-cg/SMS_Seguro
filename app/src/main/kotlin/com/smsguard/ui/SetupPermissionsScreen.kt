@@ -1,21 +1,16 @@
 package com.smsguard.ui
 
-import android.Manifest
-import android.content.ActivityNotFoundException
-import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.os.Build
-import android.os.PowerManager
-import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -55,6 +50,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.smsguard.R
 import com.smsguard.core.PermissionHealth
+import com.smsguard.core.xiaomiSupportInfo
 
 @Composable
 fun SetupPermissionsScreen(
@@ -68,10 +64,9 @@ fun SetupPermissionsScreen(
     val notificationsEnabled = remember { mutableStateOf(false) }
     val hasListener = remember { mutableStateOf(false) }
     val isIgnoringBatteryOptimizations = remember { mutableStateOf(true) }
-    val hasReceiveSmsPermission = remember { mutableStateOf(false) }
 
     val showNotificationsDeniedMsg = remember { mutableStateOf(false) }
-    val showReceiveSmsDeniedMsg = remember { mutableStateOf(false) }
+    val showActivationPrompt = remember { mutableStateOf(false) }
 
     fun refresh() {
         val health = PermissionHealth(context)
@@ -79,18 +74,11 @@ fun SetupPermissionsScreen(
         notificationsEnabled.value = health.notificationsEnabled
         hasListener.value = health.hasNotificationListenerAccess
         isIgnoringBatteryOptimizations.value = health.isIgnoringBatteryOptimizations
-        hasReceiveSmsPermission.value = health.hasReceiveSmsPermission
     }
 
     val requestNotificationsPermission =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             showNotificationsDeniedMsg.value = !granted
-            refresh()
-        }
-
-    val requestReceiveSmsPermission =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            showReceiveSmsDeniedMsg.value = !granted
             refresh()
         }
 
@@ -111,46 +99,54 @@ fun SetupPermissionsScreen(
     val step1Ok = !needsPostNotifications.value && notificationsEnabled.value
     val step2Ok = hasListener.value
     val canContinue = step1Ok && step2Ok
-    val isXiaomi = remember { context.isXiaomiDevice() }
+    val xiaomiSupportInfo = remember { context.xiaomiSupportInfo() }
 
-    SetupPermissionsScaffold(
-        modifier = modifier,
-        step1Ok = step1Ok,
-        step2Ok = step2Ok,
-        step3Ok = isIgnoringBatteryOptimizations.value,
-        showXiaomiAutoStart = isXiaomi,
-        showNotificationsDeniedMsg = showNotificationsDeniedMsg,
-        showReceiveSmsDeniedMsg = showReceiveSmsDeniedMsg,
-        onNotificationsClick = {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && needsPostNotifications.value) {
-                requestNotificationsPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-                return@SetupPermissionsScaffold
-            }
+    Box(modifier = modifier.then(Modifier.fillMaxSize())) {
+        SetupPermissionsScaffold(
+            step1Ok = step1Ok,
+            step2Ok = step2Ok,
+            step3Ok = isIgnoringBatteryOptimizations.value,
+            showXiaomiAutoStart = xiaomiSupportInfo.shouldShowGuidance,
+            showNotificationsDeniedMsg = showNotificationsDeniedMsg,
+            onNotificationsClick = {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && needsPostNotifications.value) {
+                    requestNotificationsPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                    return@SetupPermissionsScaffold
+                }
 
-            // For < Android 13 or if permission already granted but notifications are disabled, open settings.
-            context.openAppNotificationSettings()
-        },
-        onListenerClick = {
-            context.openIntentSafely(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-        },
-        stepSmsOk = hasReceiveSmsPermission.value,
-        onReceiveSmsClick = {
-            requestReceiveSmsPermission.launch(Manifest.permission.RECEIVE_SMS)
-        },
-        onBatteryClick = {
-            context.openBatteryHelp()
-        },
-        onXiaomiAutoStartClick = {
-            context.openXiaomiAutoStartSettings()
-        },
-        onOpenSettingsClick = {
-            context.openAppNotificationSettings()
-        },
-        onContinue = {
-            refresh()
-            if (canContinue) onContinue()
-        },
-    )
+                context.openAppNotificationSettings()
+            },
+            onListenerClick = {
+                showActivationPrompt.value = true
+            },
+            onBatteryClick = {
+                context.openBatteryOptimizationSettings()
+            },
+            onXiaomiAutoStartClick = {
+                context.openXiaomiAutoStartSettings()
+            },
+            onOpenSettingsClick = {
+                context.openAppNotificationSettings()
+            },
+            onContinue = {
+                refresh()
+                if (canContinue) onContinue()
+            },
+        )
+
+        if (showActivationPrompt.value) {
+            ProtectionActivationFullScreen(
+                showXiaomiNote = xiaomiSupportInfo.shouldShowGuidance,
+                onContinue = {
+                    showActivationPrompt.value = false
+                    context.openNotificationListenerSettingsWithPrompt()
+                },
+                onDismiss = {
+                    showActivationPrompt.value = false
+                },
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -158,14 +154,11 @@ fun SetupPermissionsScreen(
 private fun SetupPermissionsScaffold(
     step1Ok: Boolean,
     step2Ok: Boolean,
-    stepSmsOk: Boolean,
     step3Ok: Boolean,
     showXiaomiAutoStart: Boolean,
     showNotificationsDeniedMsg: MutableState<Boolean>,
-    showReceiveSmsDeniedMsg: MutableState<Boolean>,
     onNotificationsClick: () -> Unit,
     onListenerClick: () -> Unit,
-    onReceiveSmsClick: () -> Unit,
     onBatteryClick: () -> Unit,
     onXiaomiAutoStartClick: () -> Unit,
     onOpenSettingsClick: () -> Unit,
@@ -248,23 +241,6 @@ private fun SetupPermissionsScaffold(
                 icon = Icons.Default.Shield,
                 onClick = onListenerClick,
             )
-
-            PermissionStepCard(
-                title = stringResource(R.string.step_sms_fallback),
-                ok = stepSmsOk,
-                buttonText = stringResource(R.string.allow_sms_fallback),
-                icon = Icons.Default.Notifications,
-                onClick = onReceiveSmsClick,
-            )
-
-            if (showReceiveSmsDeniedMsg.value) {
-                Text(
-                    text = stringResource(R.string.sms_fallback_denied_msg),
-                    color = MaterialTheme.colorScheme.error,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                )
-            }
 
             PermissionStepCard(
                 title = stringResource(R.string.step_battery),
@@ -371,78 +347,4 @@ private fun PermissionStepCard(
             }
         }
     }
-}
-
-private fun Context.openIntentSafely(intent: Intent) {
-    try {
-        startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-    } catch (_: ActivityNotFoundException) {
-        openAppDetails()
-    }
-}
-
-private fun Context.openBatteryHelp() {
-    // Best-effort, OEM-safe approach:
-    // - First: request ignoring battery optimizations for this app (shows a system dialog)
-    // - Fallback: open app details (OEMs usually expose battery/autostart from there)
-    // - Xiaomi: try opening MIUI AutoStart management screen (best effort)
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        val pm = getSystemService(Context.POWER_SERVICE) as? PowerManager
-        val isIgnoring = pm?.isIgnoringBatteryOptimizations(packageName) == true
-        if (!isIgnoring) {
-            val intent =
-                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                    data = Uri.parse("package:$packageName")
-                }
-            openIntentSafely(intent)
-            return
-        }
-    }
-
-    if (isXiaomiDevice()) {
-        openXiaomiAutoStartSettings()
-        return
-    }
-
-    openAppDetails()
-}
-
-private fun Context.openXiaomiAutoStartSettings() {
-    val miuiIntent =
-        Intent("miui.intent.action.OP_AUTO_START").apply {
-            component =
-                ComponentName(
-                    "com.miui.securitycenter",
-                    "com.miui.permcenter.autostart.AutoStartManagementActivity",
-                )
-        }
-
-    try {
-        startActivity(miuiIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-    } catch (_: Exception) {
-        openAppDetails()
-    }
-}
-
-private fun Context.isXiaomiDevice(): Boolean {
-    val manufacturer = (Build.MANUFACTURER ?: "").lowercase()
-    return manufacturer.contains("xiaomi") || manufacturer.contains("redmi") || manufacturer.contains("poco")
-}
-
-private fun Context.openAppDetails() {
-    val intent =
-        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-            data = Uri.parse("package:$packageName")
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-    startActivity(intent)
-}
-
-private fun Context.openAppNotificationSettings() {
-    val intent =
-        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-            putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-    openIntentSafely(intent)
 }

@@ -1,9 +1,7 @@
 package com.smsguard.ui
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
-import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -37,11 +35,6 @@ import com.smsguard.R
 import com.smsguard.core.AlertType
 import com.smsguard.core.RiskLevel
 import com.smsguard.ui.theme.SMSGuardTheme
-
-data class PrimaryLinkAction(
-    val shouldOpenUrl: Boolean,
-    @StringRes val toastMessageResId: Int?,
-)
 
 @StringRes
 fun helpShareTemplateResIdFor(riskLevel: RiskLevel): Int =
@@ -85,21 +78,6 @@ fun buildHelpShareMessage(
         add(noClickNote)
         add(question)
     }.joinToString(separator = "\n")
-
-fun primaryLinkActionFor(riskLevel: RiskLevel): PrimaryLinkAction =
-    when (riskLevel) {
-        RiskLevel.LOW -> PrimaryLinkAction(shouldOpenUrl = true, toastMessageResId = null)
-        RiskLevel.MEDIUM ->
-            PrimaryLinkAction(
-                shouldOpenUrl = true,
-                toastMessageResId = R.string.toast_opening_suspicious_link,
-            )
-        RiskLevel.HIGH ->
-            PrimaryLinkAction(
-                shouldOpenUrl = false,
-                toastMessageResId = R.string.toast_link_blocked,
-            )
-    }
 
 class AlertActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -182,20 +160,7 @@ class AlertActivity : ComponentActivity() {
                         senderName = sender,
                         score = score,
                         reasons = reasons,
-                        onPrimary = {
-                            val action = primaryLinkActionFor(riskLevel)
-
-                            action.toastMessageResId?.let { resId ->
-                                Toast.makeText(this, getString(resId), Toast.LENGTH_LONG).show()
-                            }
-
-                            if (action.shouldOpenUrl) {
-                                openUrl(url)
-                            }
-
-                            finish()
-                        },
-                        onDismiss = { finish() },
+                        onPrimary = { finish() },
                         onHelp = {
                             shareSecurityCheckHelp(
                                 riskLevel = riskLevel,
@@ -306,19 +271,6 @@ class AlertActivity : ComponentActivity() {
         startActivity(
             Intent.createChooser(intent, getString(R.string.help_share_chooser_title)),
         )
-    }
-
-    private fun openUrl(url: String) {
-        try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            startActivity(intent)
-        } catch (_: Exception) {
-            Toast.makeText(
-                this,
-                getString(R.string.toast_cannot_open_link),
-                Toast.LENGTH_LONG,
-            ).show()
-        }
     }
 }
 

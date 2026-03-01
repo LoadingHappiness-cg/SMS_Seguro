@@ -2,7 +2,7 @@ package com.smsguard.notification
 
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
-import android.util.Log
+import com.smsguard.core.AppLogger
 import com.smsguard.core.AlertType
 import com.smsguard.core.HistoryEvent
 import com.smsguard.core.MultibancoDetector
@@ -35,7 +35,10 @@ object SmsEventProcessor {
         packageName: String? = null,
     ): Boolean {
         val text = rawText.trim().take(2_000)
-        if (text.isBlank()) return false
+        if (text.isBlank()) {
+            AppLogger.w("ProbeA intake dropped source=$source package=${packageName.orEmpty()} reason=blank_text")
+            return false
+        }
         val normalizedText = TextNormalizer.normalize(text)
 
         val mbData = MultibancoDetector.detect(normalizedText)
@@ -50,7 +53,15 @@ object SmsEventProcessor {
                 multibancoData = mbData,
             )
 
+        AppLogger.d("ProbeB risk evaluated source=$source package=${packageName.orEmpty()} level=${result.level} score=${result.score} reasons=${result.reasons.take(3).joinToString(",")} timestamp=${System.currentTimeMillis()}")
+        AlertPipelineDiagnostics.recordRisk(
+            context = context,
+            level = result.level,
+            score = result.score,
+        )
+
         if (urls.isEmpty() && mbData == null && result.score == 0) {
+            AppLogger.d("ProbeB event ignored source=$source package=${packageName.orEmpty()} reason=no_urls_no_multibanco_no_risk")
             return false
         }
 
@@ -59,35 +70,23 @@ object SmsEventProcessor {
 
         val eventKey = buildEventKey(normalizedText, result)
         if (isDuplicateEvent(context, eventKey)) {
-            Log.d(
-                "SMS_SEGURO",
-                "Duplicate event suppressed source=$source package=${packageName.orEmpty()}",
-            )
+            AppLogger.d("ProbeC event suppressed source=$source package=${packageName.orEmpty()} reason=duplicate")
             return false
         }
 
-        Log.d(
-            "SMS_SEGURO",
-            "Assessment source=$source package=${packageName.orEmpty()} urls=${urls.size} score=${result.score} level=${result.level} reasons=${result.reasons.joinToString(",")} shouldNotify=$shouldNotify",
-        )
+        AppLogger.d("Assessment source=$source package=${packageName.orEmpty()} urls=${urls.size} score=${result.score} level=${result.level} reasons=${result.reasons.joinToString(",")} shouldNotify=$shouldNotify")
 
-        if (shouldNotify) {
-            AlertNotifier.show(
-                context = context,
-                sender = sender,
-                assessment =
-                    RiskAssessment(
-                        alertType = alertType,
-                        primaryUrl = result.primaryUrl,
-                        primaryDomain = result.primaryDomain,
-                        messageText = text,
-                        score = result.score,
-                        level = result.level,
-                        reasons = result.reasons,
-                        multibancoData = mbData,
-                    ),
+        val assessment =
+            RiskAssessment(
+                alertType = alertType,
+                primaryUrl = result.primaryUrl,
+                primaryDomain = result.primaryDomain,
+                messageText = text,
+                score = result.score,
+                level = result.level,
+                reasons = result.reasons,
+                multibancoData = mbData,
             )
-        }
 
         val event =
             HistoryEvent(
@@ -104,8 +103,27 @@ object SmsEventProcessor {
                 riskLevel = result.level,
                 reasons = result.reasons,
             )
-        HistoryStore(context).saveEvent(event)
-        return shouldNotify
+        val historyStore = HistoryStore(context)
+
+        return persistAndMaybeNotify(
+            event = event,
+            shouldNotify = shouldNotify,
+            persistEvent = { historyEvent ->
+                AppLogger.d("ProbeC alert persisted riskLevel=${historyEvent.riskLevel} timestamp=${historyEvent.timestamp}")
+                AlertPipelineDiagnostics.recordPersisted(context)
+                val persisted = historyStore.saveEvent(historyEvent)
+                if (!persisted) {
+                    AppLogger.e("ProbeC persist failed riskLevel=${historyEvent.riskLevel}")
+                }
+            },
+            notifyAlert = {
+                AlertNotifier.show(
+                    context = context,
+                    sender = sender,
+                    assessment = assessment,
+                )
+            },
+        )
     }
 
     private fun ensureRiskEngine(context: Context): RiskEngine {
@@ -177,5 +195,24 @@ object SmsEventProcessor {
             result.level == RiskLevel.HIGH ||
             result.level == RiskLevel.MEDIUM ||
             lowRiskButSuspiciousUrl
+    }
+
+    internal fun persistAndMaybeNotify(
+        event: HistoryEvent,
+        shouldNotify: Boolean,
+        persistEvent: (HistoryEvent) -> Unit,
+        notifyAlert: () -> Boolean,
+    ): Boolean {
+        persistEvent(event)
+        if (!shouldNotify) return false
+
+        return runCatching {
+            notifyAlert()
+        }.getOrElse { error ->
+            runCatching {
+                AppLogger.e("ProbeC notify failed after persistence", error)
+            }
+            false
+        }
     }
 }

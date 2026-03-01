@@ -10,32 +10,29 @@ import org.junit.Test
 class SecurityCheckResultModelTest {
 
     @Test
-    fun lowRisk_usesCalmSemanticsAndBrowserAction() {
+    fun lowRisk_usesCalmSemanticsAndOkAction() {
         val state = securityCheckContentFor(RiskLevel.LOW)
 
         assertEquals(SecurityStatusTone.CALM, state.tone)
-        assertEquals(R.string.security_check_action_open_browser, state.primaryActionLabelResId)
-        assertEquals(R.string.security_check_caption_will_open_browser, state.primaryCaptionResId)
+        assertEquals(R.string.security_check_action_ignore_exit, state.primaryActionLabelResId)
         assertEquals(R.string.risk_low_message, state.supportingMessageResId)
     }
 
     @Test
-    fun mediumRisk_usesAttentionSemanticsAndCautiousAction() {
+    fun mediumRisk_usesAttentionSemanticsAndOkAction() {
         val state = securityCheckContentFor(RiskLevel.MEDIUM)
 
         assertEquals(SecurityStatusTone.ATTENTION, state.tone)
-        assertEquals(R.string.security_check_action_open_carefully, state.primaryActionLabelResId)
-        assertEquals(R.string.security_check_caption_will_open_browser, state.primaryCaptionResId)
+        assertEquals(R.string.security_check_action_ignore_exit, state.primaryActionLabelResId)
         assertEquals(R.string.risk_medium_message, state.supportingMessageResId)
     }
 
     @Test
-    fun highRisk_usesDangerSemanticsAndBlockAction() {
+    fun highRisk_usesDangerSemanticsAndOkAction() {
         val state = securityCheckContentFor(RiskLevel.HIGH)
 
         assertEquals(SecurityStatusTone.DANGER, state.tone)
-        assertEquals(R.string.security_check_action_block_link, state.primaryActionLabelResId)
-        assertEquals(R.string.security_check_caption_will_not_open, state.primaryCaptionResId)
+        assertEquals(R.string.security_check_action_ignore_exit, state.primaryActionLabelResId)
         assertEquals(R.string.risk_high_message, state.supportingMessageResId)
     }
 
@@ -45,30 +42,6 @@ class SecurityCheckResultModelTest {
 
         assertEquals(R.string.risk_label_medium, state.chipLabelResId)
         assertEquals(false, state.showsCopyLinkAction)
-    }
-
-    @Test
-    fun lowRisk_primaryAction_opensWithoutWarning() {
-        val action = primaryLinkActionFor(RiskLevel.LOW)
-
-        assertTrue(action.shouldOpenUrl)
-        assertEquals(null, action.toastMessageResId)
-    }
-
-    @Test
-    fun mediumRisk_primaryAction_opensWithWarningToast() {
-        val action = primaryLinkActionFor(RiskLevel.MEDIUM)
-
-        assertTrue(action.shouldOpenUrl)
-        assertEquals(R.string.toast_opening_suspicious_link, action.toastMessageResId)
-    }
-
-    @Test
-    fun highRisk_primaryAction_blocksWithoutOpening() {
-        val action = primaryLinkActionFor(RiskLevel.HIGH)
-
-        assertEquals(false, action.shouldOpenUrl)
-        assertEquals(R.string.toast_link_blocked, action.toastMessageResId)
     }
 
     @Test

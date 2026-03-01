@@ -25,7 +25,7 @@ class HistoryStore(context: Context) {
         if (!historyDir.exists()) historyDir.mkdirs()
     }
 
-    fun saveEvent(event: HistoryEvent) {
+    fun saveEvent(event: HistoryEvent): Boolean {
         val current = getAllEvents().toMutableList()
         current.add(0, event)
         val limited = current.take(200)
@@ -37,8 +37,10 @@ class HistoryStore(context: Context) {
         try {
             out.use { it.write(bytes) }
             atomicFile.finishWrite(out)
+            return true
         } catch (e: Exception) {
             atomicFile.failWrite(out)
+            return false
         }
     }
 

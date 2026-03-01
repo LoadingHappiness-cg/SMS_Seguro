@@ -1,21 +1,23 @@
 package com.smsguard.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Verified
 import androidx.compose.material.icons.outlined.WarningAmber
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -67,7 +69,6 @@ data class SecurityCheckContent(
     @StringRes val chipLabelResId: Int,
     @StringRes val supportingMessageResId: Int,
     @StringRes val primaryActionLabelResId: Int,
-    @StringRes val primaryCaptionResId: Int,
     val showsCopyLinkAction: Boolean,
 )
 
@@ -77,7 +78,6 @@ private data class RiskUiSpec(
     val chipLabel: String,
     val message: String,
     val primaryCta: String,
-    val primaryCaption: String,
     val chipContainer: @Composable (ColorScheme) -> Color,
     val chipContent: @Composable (ColorScheme) -> Color,
 )
@@ -89,8 +89,7 @@ fun securityCheckContentFor(riskLevel: RiskLevel): SecurityCheckContent =
                 tone = SecurityStatusTone.CALM,
                 chipLabelResId = R.string.risk_label_low,
                 supportingMessageResId = R.string.risk_low_message,
-                primaryActionLabelResId = R.string.security_check_action_open_browser,
-                primaryCaptionResId = R.string.security_check_caption_will_open_browser,
+                primaryActionLabelResId = R.string.security_check_action_ignore_exit,
                 showsCopyLinkAction = false,
             )
         RiskLevel.MEDIUM ->
@@ -98,8 +97,7 @@ fun securityCheckContentFor(riskLevel: RiskLevel): SecurityCheckContent =
                 tone = SecurityStatusTone.ATTENTION,
                 chipLabelResId = R.string.risk_label_medium,
                 supportingMessageResId = R.string.risk_medium_message,
-                primaryActionLabelResId = R.string.security_check_action_open_carefully,
-                primaryCaptionResId = R.string.security_check_caption_will_open_browser,
+                primaryActionLabelResId = R.string.security_check_action_ignore_exit,
                 showsCopyLinkAction = false,
             )
         RiskLevel.HIGH ->
@@ -107,8 +105,7 @@ fun securityCheckContentFor(riskLevel: RiskLevel): SecurityCheckContent =
                 tone = SecurityStatusTone.DANGER,
                 chipLabelResId = R.string.risk_label_high,
                 supportingMessageResId = R.string.risk_high_message,
-                primaryActionLabelResId = R.string.security_check_action_block_link,
-                primaryCaptionResId = R.string.security_check_caption_will_not_open,
+                primaryActionLabelResId = R.string.security_check_action_ignore_exit,
                 showsCopyLinkAction = false,
             )
     }
@@ -131,7 +128,6 @@ private fun riskUiSpec(level: RiskLevel): RiskUiSpec {
                 chipLabel = stringResource(content.chipLabelResId),
                 message = stringResource(content.supportingMessageResId),
                 primaryCta = stringResource(content.primaryActionLabelResId),
-                primaryCaption = stringResource(content.primaryCaptionResId),
                 chipContainer = { cs -> cs.primaryContainer },
                 chipContent = { cs -> cs.onPrimaryContainer },
             )
@@ -148,7 +144,6 @@ private fun riskUiSpec(level: RiskLevel): RiskUiSpec {
                 chipLabel = stringResource(content.chipLabelResId),
                 message = stringResource(content.supportingMessageResId),
                 primaryCta = stringResource(content.primaryActionLabelResId),
-                primaryCaption = stringResource(content.primaryCaptionResId),
                 chipContainer = { cs -> cs.tertiaryContainer },
                 chipContent = { cs -> cs.onTertiaryContainer },
             )
@@ -165,7 +160,6 @@ private fun riskUiSpec(level: RiskLevel): RiskUiSpec {
                 chipLabel = stringResource(content.chipLabelResId),
                 message = stringResource(content.supportingMessageResId),
                 primaryCta = stringResource(content.primaryActionLabelResId),
-                primaryCaption = stringResource(content.primaryCaptionResId),
                 chipContainer = { cs -> cs.errorContainer },
                 chipContent = { cs -> cs.onErrorContainer },
             )
@@ -181,7 +175,6 @@ fun SecurityCheckResultScreen(
     score: Int,
     reasons: List<String>,
     onPrimary: () -> Unit,
-    onDismiss: () -> Unit,
     onHelp: () -> Unit,
     title: String? = null,
     modifier: Modifier = Modifier,
@@ -204,19 +197,18 @@ fun SecurityCheckResultScreen(
         },
         bottomBar = {
             BottomActionBar(
-                riskLevel = riskLevel,
                 primaryLabel = ui.primaryCta,
-                primaryCaption = ui.primaryCaption,
                 onPrimary = onPrimary,
-                onDismiss = onDismiss,
                 onHelp = onHelp,
             )
         },
     ) { innerPadding ->
+        val scrollState = rememberScrollState()
         Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
+                .verticalScroll(scrollState)
                 .padding(horizontal = 16.dp)
                 .padding(top = 24.dp, bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -330,17 +322,16 @@ fun SecurityCheckResultScreen(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
 
 @Composable
 private fun BottomActionBar(
-    riskLevel: RiskLevel,
     primaryLabel: String,
-    primaryCaption: String,
     onPrimary: () -> Unit,
-    onDismiss: () -> Unit,
     onHelp: () -> Unit,
 ) {
     Surface(
@@ -351,54 +342,15 @@ private fun BottomActionBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(16.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            when (riskLevel) {
-                RiskLevel.LOW ->
-                    FilledTonalButton(
-                        onClick = onPrimary,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.large,
-                    ) {
-                        Text(primaryLabel)
-                    }
-                RiskLevel.MEDIUM ->
-                    FilledTonalButton(
-                        onClick = onPrimary,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.large,
-                    ) {
-                        Text(primaryLabel)
-                    }
-                RiskLevel.HIGH ->
-                    Button(
-                        onClick = onPrimary,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.large,
-                        colors =
-                            ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.error,
-                                contentColor = MaterialTheme.colorScheme.onError,
-                            ),
-                    ) {
-                        Text(primaryLabel)
-                    }
-            }
-
-            Text(
-                text = primaryCaption,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            TextButton(
-                onClick = onDismiss,
+            FilledTonalButton(
+                onClick = onPrimary,
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large,
             ) {
-                Text(stringResource(R.string.security_check_action_ignore_exit))
+                Text(primaryLabel)
             }
 
             TextButton(
@@ -535,7 +487,6 @@ private fun PreviewLow() {
             score = 20,
             reasons = listOf("safe_domain", "url_present"),
             onPrimary = {},
-            onDismiss = {},
             onHelp = {},
         )
     }
@@ -552,7 +503,6 @@ private fun PreviewMedium() {
             score = 55,
             reasons = listOf("correlation_brand_url_mismatch", "keyword_urgency"),
             onPrimary = {},
-            onDismiss = {},
             onHelp = {},
         )
     }
@@ -569,7 +519,6 @@ private fun PreviewHigh() {
             score = 92,
             reasons = listOf("url_punycode", "keyword_dataRequest"),
             onPrimary = {},
-            onDismiss = {},
             onHelp = {},
         )
     }
@@ -586,7 +535,6 @@ private fun PreviewLowProjectTheme() {
             score = 20,
             reasons = listOf("safe_domain", "url_present"),
             onPrimary = {},
-            onDismiss = {},
             onHelp = {},
         )
     }

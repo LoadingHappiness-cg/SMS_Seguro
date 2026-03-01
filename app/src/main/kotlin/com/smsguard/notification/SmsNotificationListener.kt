@@ -6,30 +6,34 @@ import android.os.Bundle
 import android.os.Parcelable
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import android.util.Log
 import com.smsguard.R
+import com.smsguard.core.AppLogger
+import com.smsguard.core.UrlExtractor
 
 class SmsNotificationListener : NotificationListenerService() {
 
     override fun onListenerConnected() {
         super.onListenerConnected()
-        Log.d("SMS_SEGURO", "Notification listener connected")
+        AppLogger.d("Notification listener connected")
     }
 
     override fun onListenerDisconnected() {
         super.onListenerDisconnected()
-        Log.w("SMS_SEGURO", "Notification listener disconnected; requesting rebind")
+        AppLogger.w("Notification listener disconnected; requesting rebind")
         try {
             requestRebind(ComponentName(this, SmsNotificationListener::class.java))
         } catch (e: Exception) {
-            Log.e("SMS_SEGURO", "Failed to request listener rebind", e)
+            AppLogger.e("Failed to request listener rebind", e)
         }
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         try {
             val pkg = sbn.packageName ?: return
-            if (!SmsSourceAllowlist.isAllowed(applicationContext, pkg)) return
+            if (!SmsSourceAllowlist.isAllowed(applicationContext, pkg)) {
+                AppLogger.d("ProbeA intake ignored source=notification_listener package=$pkg reason=package_not_allowed")
+                return
+            }
 
             val extras = sbn.notification.extras
             val title =
@@ -37,12 +41,22 @@ class SmsNotificationListener : NotificationListenerService() {
                     ?: applicationContext.getString(R.string.unknown)
             val fullText = extractNotificationText(extras)
             if (fullText.isBlank()) {
-                Log.d(
-                    "SMS_SEGURO",
-                    "Message notification without extractable text. package=${sbn.packageName} category=${sbn.notification.category}",
-                )
+                AppLogger.d("ProbeA intake dropped source=notification_listener package=${sbn.packageName} reason=no_extractable_text category=${sbn.notification.category}")
                 return
             }
+
+            val primaryDomain =
+                UrlExtractor.extractUrls(fullText)
+                    .firstOrNull()
+                    ?.let(UrlExtractor::getDomain)
+                    .orEmpty()
+
+            AppLogger.d("ProbeA event received source=notification_listener package=$pkg domain=$primaryDomain timestamp=${System.currentTimeMillis()}")
+            AlertPipelineDiagnostics.recordEvent(
+                context = applicationContext,
+                source = "notification_listener",
+                packageName = pkg,
+            )
 
             SmsEventProcessor.process(
                 context = applicationContext,
@@ -52,7 +66,7 @@ class SmsNotificationListener : NotificationListenerService() {
                 packageName = pkg,
             )
         } catch (e: Exception) {
-            Log.e("SMS_SEGURO", "Error while processing SMS notification", e)
+            AppLogger.e("ProbeA exception while processing SMS notification", e)
         }
     }
 
