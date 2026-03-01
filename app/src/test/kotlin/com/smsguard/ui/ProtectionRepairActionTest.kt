@@ -1,10 +1,31 @@
 package com.smsguard.ui
 
+import com.smsguard.R
 import com.smsguard.core.protectionStatusReport
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ProtectionRepairActionTest {
+
+    @Test
+    fun primaryActionLabel_usesSingleMainCtaForRepairs() {
+        assertEquals(
+            R.string.setup_action_activate,
+            primaryActionLabelResIdFor(ProtectionRepairAction.ENABLE_LISTENER),
+        )
+        assertEquals(
+            R.string.setup_action_activate,
+            primaryActionLabelResIdFor(ProtectionRepairAction.ENABLE_ALERTS),
+        )
+        assertEquals(
+            R.string.setup_action_activate,
+            primaryActionLabelResIdFor(ProtectionRepairAction.FIX_FOREGROUND_NOTIFICATION),
+        )
+        assertEquals(
+            R.string.setup_action_check_rules,
+            primaryActionLabelResIdFor(ProtectionRepairAction.NONE),
+        )
+    }
 
     @Test
     fun primaryRepairAction_prioritizesNotificationListener() {

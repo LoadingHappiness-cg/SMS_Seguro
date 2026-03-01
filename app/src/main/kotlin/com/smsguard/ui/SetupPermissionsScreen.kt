@@ -135,7 +135,7 @@ fun SetupPermissionsScreen(
         )
 
         if (showActivationPrompt.value) {
-            ProtectionActivationFullScreen(
+            SeniorActivationScreen(
                 showXiaomiNote = xiaomiSupportInfo.shouldShowGuidance,
                 onContinue = {
                     showActivationPrompt.value = false

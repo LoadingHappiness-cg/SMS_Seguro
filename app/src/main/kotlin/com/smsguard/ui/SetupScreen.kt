@@ -219,10 +219,13 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
 
             ProtectionStatusCard(
                 report = protectionStatus,
-                onEnableListener = { showActivationPrompt = true },
-                onEnableAlerts = { context.openAlertDeliverySettings(protectionStatus) },
-                onFixForegroundNotification = { context.fixForegroundNotification(protectionStatus) },
-                onCheckRulesNow = {
+                primaryAction = primaryRepairActionFor(protectionStatus),
+                onPrimaryAction = {
+                    when (primaryRepairActionFor(protectionStatus)) {
+                        ProtectionRepairAction.ENABLE_LISTENER -> showActivationPrompt = true
+                        ProtectionRepairAction.ENABLE_ALERTS -> context.openAlertDeliverySettings(protectionStatus)
+                        ProtectionRepairAction.FIX_FOREGROUND_NOTIFICATION -> context.fixForegroundNotification(protectionStatus)
+                        ProtectionRepairAction.NONE -> {
                     val info = checkNowWorkInfo
                     val isAlreadyRunning =
                         info?.state == WorkInfo.State.ENQUEUED ||
@@ -244,6 +247,8 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
                     statusMessageRes = R.string.checking_updates
                     isChecking = true
                     RuleUpdateScheduler.runCheckNow(context)
+                        }
+                    }
                 },
                 rulesStatus = rulesUpdateStatus(isChecking, statusMessageRes, context),
                 rulesHealthy = rulesUpdateHealthy(isChecking, statusMessageRes),
@@ -291,7 +296,7 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
         }
 
         if (showActivationPrompt) {
-            ProtectionActivationFullScreen(
+            SeniorActivationScreen(
                 showXiaomiNote = xiaomiInfo.shouldShowGuidance,
                 onContinue = {
                     showActivationPrompt = false
@@ -374,16 +379,15 @@ private fun ProtectionOverviewCard(
 @Composable
 private fun ProtectionStatusCard(
     report: ProtectionStatusReport,
-    onEnableListener: () -> Unit,
-    onEnableAlerts: () -> Unit,
-    onFixForegroundNotification: () -> Unit,
-    onCheckRulesNow: () -> Unit,
+    primaryAction: ProtectionRepairAction,
+    onPrimaryAction: () -> Unit,
     rulesStatus: String,
     rulesHealthy: Boolean,
     lastCheckAt: Long,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val primaryActionLabelResId = primaryActionLabelResIdFor(primaryAction)
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -421,56 +425,28 @@ private fun ProtectionStatusCard(
                 missingText = rulesStatus,
             )
 
+            FilledTonalButton(
+                onClick = onPrimaryAction,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Icon(
+                    imageVector =
+                        if (primaryAction == ProtectionRepairAction.NONE) {
+                            Icons.Outlined.Refresh
+                        } else {
+                            Icons.Outlined.Security
+                        },
+                    contentDescription = null,
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(primaryActionLabelResId))
+            }
+
             SetupInfoRow(
                 label = stringResource(R.string.last_check),
                 value = formatLastCheck(lastCheckAt, context),
             )
-
-            if (!report.listenerOk) {
-                FilledTonalButton(
-                    onClick = onEnableListener,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                ) {
-                    Icon(Icons.Outlined.Security, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.setup_action_activate))
-                }
-            }
-
-            if (!report.alertsReady) {
-                FilledTonalButton(
-                    onClick = onEnableAlerts,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                ) {
-                    Icon(Icons.Outlined.Notifications, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.setup_action_activate_alerts))
-                }
-            }
-
-            if (!report.foregroundNotificationAllowed) {
-                FilledTonalButton(
-                    onClick = onFixForegroundNotification,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                ) {
-                    Icon(Icons.Outlined.Notifications, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.setup_action_activate_foreground))
-                }
-            }
-
-            FilledTonalButton(
-                onClick = onCheckRulesNow,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-            ) {
-                Icon(Icons.Outlined.Refresh, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.setup_action_check_rules))
-            }
         }
     }
 }

@@ -15,9 +15,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material3.Button
@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.smsguard.R
 
 private const val ACTIVATION_PROMPT_PREFS = "activation_prompt"
@@ -43,13 +44,13 @@ private const val ACTIVATION_PROMPT_SHOWN_KEY = "activation_prompt_shown"
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun ProtectionActivationFullScreen(
+fun SeniorActivationScreen(
     showXiaomiNote: Boolean,
     onContinue: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val steps = activationPromptStepResIds(includeXiaomiNote = showXiaomiNote)
+    val steps = seniorActivationStepResIds(includeXiaomiNote = showXiaomiNote)
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -75,15 +76,15 @@ fun ProtectionActivationFullScreen(
             ) {
                 Button(
                     onClick = onContinue,
-                    modifier = Modifier.fillMaxWidth().height(58.dp),
+                    modifier = Modifier.fillMaxWidth().height(64.dp),
                     shape = MaterialTheme.shapes.large,
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 ) {
                     Text(
                         text = stringResource(R.string.protection_activation_continue),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
                     )
                 }
 
@@ -115,14 +116,14 @@ fun ProtectionActivationFullScreen(
                 Surface(
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.size(96.dp),
+                    modifier = Modifier.size(104.dp),
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Outlined.Security,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(42.dp),
+                            modifier = Modifier.size(48.dp),
                         )
                     }
                 }
@@ -131,22 +132,38 @@ fun ProtectionActivationFullScreen(
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
                     text = stringResource(R.string.protection_activation_heading),
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.headlineMedium.copy(fontSize = 32.sp, lineHeight = 38.sp),
                     color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = stringResource(R.string.protection_activation_subheading),
-                    style = MaterialTheme.typography.bodyLarge,
+                    text = stringResource(R.string.protection_activation_body),
+                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 20.sp, lineHeight = 28.sp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                steps.forEachIndexed { index, stepResId ->
-                    ActivationStepRow(
-                        number = index + 1,
-                        text = stringResource(stepResId),
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                shape = MaterialTheme.shapes.large,
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.protection_activation_steps_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Bold,
                     )
+
+                    steps.forEachIndexed { index, stepResId ->
+                        ActivationStepRow(
+                            number = index + 1,
+                            text = stringResource(stepResId),
+                        )
+                    }
                 }
             }
 
@@ -161,7 +178,7 @@ private fun ActivationStepRow(
     text: String,
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        color = MaterialTheme.colorScheme.surfaceContainerHighest,
         shape = MaterialTheme.shapes.large,
     ) {
         Column(
@@ -170,24 +187,25 @@ private fun ActivationStepRow(
         ) {
             Text(
                 text = number.toString(),
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMedium.copy(fontSize = 24.sp),
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
             )
             Text(
                 text = text,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 20.sp, lineHeight = 28.sp),
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
     }
 }
 
-internal fun activationPromptStepResIds(includeXiaomiNote: Boolean): List<Int> =
+internal fun seniorActivationStepResIds(includeXiaomiNote: Boolean): List<Int> =
     buildList {
         add(R.string.protection_activation_step_1)
         add(R.string.protection_activation_step_2)
         add(R.string.protection_activation_step_3)
+        add(R.string.protection_activation_step_4)
         if (includeXiaomiNote) {
             add(R.string.protection_activation_step_xiaomi)
         }
