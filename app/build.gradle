@@ -4,6 +4,22 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization'
 }
 
+def releaseSigningProp = { String key ->
+    return providers.gradleProperty(key)
+        .orElse(providers.environmentVariable(key))
+        .orNull
+}
+
+def releaseStoreFilePath = releaseSigningProp('SMS_SEGURO_RELEASE_STORE_FILE')
+def releaseStorePassword = releaseSigningProp('SMS_SEGURO_RELEASE_STORE_PASSWORD')
+def releaseKeyAlias = releaseSigningProp('SMS_SEGURO_RELEASE_KEY_ALIAS')
+def releaseKeyPassword = releaseSigningProp('SMS_SEGURO_RELEASE_KEY_PASSWORD')
+
+def hasReleaseSigningConfig =
+    [releaseStoreFilePath, releaseStorePassword, releaseKeyAlias, releaseKeyPassword].every { value ->
+        value != null && !value.trim().isEmpty()
+    }
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
@@ -34,10 +50,24 @@ android {
         }
     }
 
+    signingConfigs {
+        if (hasReleaseSigningConfig) {
+            release {
+                storeFile file(releaseStoreFilePath)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (hasReleaseSigningConfig) {
+                signingConfig signingConfigs.release
+            }
         }
     }
     compileOptions {
@@ -63,6 +93,18 @@ android {
     applicationVariants.all { variant ->
         variant.outputs.all {
             outputFileName = "sms-seguro-${variant.versionName}.apk"
+        }
+    }
+}
+
+tasks.configureEach { task ->
+    if ((task.name == 'assembleRelease' || task.name == 'bundleRelease') && !hasReleaseSigningConfig) {
+        task.doFirst {
+            throw new GradleException(
+                "Release signing credentials are missing. Define SMS_SEGURO_RELEASE_STORE_FILE, " +
+                    "SMS_SEGURO_RELEASE_STORE_PASSWORD, SMS_SEGURO_RELEASE_KEY_ALIAS, and " +
+                    "SMS_SEGURO_RELEASE_KEY_PASSWORD in ~/.gradle/gradle.properties or environment variables."
+            )
         }
     }
 }
