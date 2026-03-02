@@ -45,6 +45,7 @@
     <string name="setup_status_alert_channel">Alertas importantes</string>
     <string name="setup_status_rules">Atualizações de regras</string>
     <string name="setup_status_listener_simple">Acesso às notificações</string>
+    <string name="setup_status_notification_permission_simple">Permissão de notificações</string>
     <string name="setup_status_service_simple">Serviço ativo</string>
     <string name="setup_status_foreground_notification_simple">Proteção em execução</string>
     <string name="setup_status_notification_visible_simple">Notificação visível</string>
@@ -263,6 +264,11 @@ Recebi uma mensagem com um link e o SMS Seguro diz que parece perigoso e recomen
     <string name="setup_status_active">Ativa</string>
     <string name="setup_status_inactive">Desativada</string>
     <string name="setup_foreground_restart_toast">A tentar restaurar a proteção em execução.</string>
+    <string name="setup_foreground_hidden_dialog_title">O Xiaomi pode estar a ocultar a notificação</string>
+    <string name="setup_foreground_hidden_dialog_body">A proteção pode estar ativa, mas o sistema não mostra a notificação persistente.</string>
+    <string name="setup_foreground_hidden_dialog_xiaomi_hint">No Xiaomi, verifique as Notificações permanentes e o canal Proteção em execução.</string>
+    <string name="setup_foreground_hidden_dialog_notifications">Abrir definições de notificações</string>
+    <string name="setup_foreground_hidden_dialog_channel">Abrir canal Proteção em execução</string>
     <string name="setup_diagnostics_title">Diagnóstico</string>
     <string name="setup_diagnostics_last_event">Último evento recebido</string>
     <string name="setup_diagnostics_last_risk">Último risco calculado</string>

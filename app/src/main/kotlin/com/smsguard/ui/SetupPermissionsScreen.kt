@@ -91,7 +91,7 @@ fun SetupPermissionsScreen(
             !foregroundRecoveryAttempted
         ) {
             foregroundRecoveryAttempted = true
-            context.restartProtectionService()
+            context.restartProtectionService(showToast = false)
         }
 
         if (health.foregroundNotificationVisible) {

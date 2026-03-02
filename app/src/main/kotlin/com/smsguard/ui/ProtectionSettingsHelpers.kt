@@ -75,7 +75,7 @@ internal fun Context.fixForegroundNotification(report: ProtectionStatusReport) {
         !report.alertsReady -> openAlertDeliverySettings(report)
         !report.postNotificationsOk || !NotificationPermission.isGranted(this) -> openAppNotificationSettings()
         !report.foregroundChannelOk -> openForegroundChannelSettings()
-        !report.foregroundNotificationVisible -> restartProtectionService()
+        !report.foregroundNotificationVisible -> restartProtectionService(showToast = true)
         else -> openAppNotificationSettings()
     }
 }
@@ -166,9 +166,11 @@ internal fun Context.openXiaomiTutorial() {
     openIntentSafely(intent)
 }
 
-internal fun Context.restartProtectionService() {
+internal fun Context.restartProtectionService(showToast: Boolean = true) {
     ProtectionServiceStarter.start(this)
-    Toast.makeText(this, getString(R.string.setup_foreground_restart_toast), Toast.LENGTH_LONG).show()
+    if (showToast) {
+        Toast.makeText(this, getString(R.string.setup_foreground_restart_toast), Toast.LENGTH_LONG).show()
+    }
 }
 
 internal fun protectionDeepLinkUri(): Uri = Uri.parse(PROTECTION_DEEP_LINK_URL)

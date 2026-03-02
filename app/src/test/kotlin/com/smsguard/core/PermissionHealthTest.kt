@@ -87,7 +87,7 @@ class PermissionHealthTest {
     }
 
     @Test
-    fun protectionReady_failsWhenForegroundNotificationIsNotVisible() {
+    fun protectionReady_doesNotDependOnForegroundNotificationVisibility() {
         val report =
             protectionStatusReport(
                 listenerOk = true,
@@ -99,6 +99,7 @@ class PermissionHealthTest {
                 foregroundNotificationVisible = false,
             )
 
-        assertFalse(report.isReady)
+        assertTrue(report.isReady)
+        assertFalse(report.foregroundNotificationVisible)
     }
 }

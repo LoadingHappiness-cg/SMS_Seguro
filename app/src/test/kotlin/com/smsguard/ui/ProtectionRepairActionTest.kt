@@ -18,7 +18,7 @@ class ProtectionRepairActionTest {
             primaryActionLabelResIdFor(ProtectionRepairAction.ENABLE_ALERTS),
         )
         assertEquals(
-            R.string.setup_action_activate,
+            R.string.setup_action_fix_foreground_notification,
             primaryActionLabelResIdFor(ProtectionRepairAction.FIX_FOREGROUND_NOTIFICATION),
         )
         assertEquals(
@@ -68,7 +68,9 @@ class ProtectionRepairActionTest {
                     notificationsAllowed = true,
                     postNotificationsOk = true,
                     alertChannelOk = true,
-                    foregroundNotificationAllowed = false,
+                    foregroundNotificationAllowed = true,
+                    foregroundChannelOk = true,
+                    foregroundNotificationVisible = false,
                 ),
             )
 

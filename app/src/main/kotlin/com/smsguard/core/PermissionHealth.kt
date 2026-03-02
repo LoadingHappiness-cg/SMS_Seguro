@@ -23,8 +23,11 @@ data class ProtectionStatusReport(
     val alertsReady: Boolean
         get() = notificationsAllowed && postNotificationsOk && alertChannelOk
 
+    val protectionRunning: Boolean
+        get() = listenerOk && alertsReady
+
     val isReady: Boolean
-        get() = listenerOk && alertsReady && foregroundNotificationVisible
+        get() = protectionRunning && foregroundNotificationAllowed
 }
 
 class PermissionHealth(

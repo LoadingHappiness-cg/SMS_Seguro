@@ -33,10 +33,12 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -91,27 +93,29 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
     var ignoresBatteryOptimizations by remember { mutableStateOf(PermissionHealth(context).isIgnoringBatteryOptimizations) }
     var showActivationPrompt by remember { mutableStateOf(false) }
     var showNotificationPermissionBlocker by remember { mutableStateOf(false) }
+    var showForegroundRecoveryDialog by remember { mutableStateOf(false) }
     var protectionRefreshNonce by remember { mutableIntStateOf(0) }
     var foregroundRecoveryAttempted by remember { mutableStateOf(false) }
+    var foregroundRecoveryNonce by remember { mutableIntStateOf(0) }
 
     fun refreshProtectionStatus() {
         val health = PermissionHealth(context)
         protectionStatus = health.protectionStatusReport()
         ignoresBatteryOptimizations = health.isIgnoringBatteryOptimizations
+    }
 
-        if (health.hasNotificationListenerAccess &&
-            health.postNotificationsGranted &&
-            health.foregroundNotificationChannelOk &&
-            !health.foregroundNotificationVisible &&
-            !foregroundRecoveryAttempted
-        ) {
-            foregroundRecoveryAttempted = true
-            context.restartProtectionService()
-        }
+    fun canAttemptForegroundRecovery(report: ProtectionStatusReport = protectionStatus): Boolean {
+        return report.protectionRunning && report.foregroundNotificationAllowed && !report.foregroundNotificationVisible
+    }
 
-        if (health.foregroundNotificationVisible) {
-            foregroundRecoveryAttempted = false
+    fun attemptForegroundRecovery(): Boolean {
+        refreshProtectionStatus()
+        if (!canAttemptForegroundRecovery()) {
+            return false
         }
+        context.restartProtectionService(showToast = false)
+        foregroundRecoveryNonce += 1
+        return true
     }
 
     val requestNotificationsPermission =
@@ -180,9 +184,25 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
     LaunchedEffect(protectionRefreshNonce) {
         refreshProtectionStatus()
         repeat(3) {
-            if (protectionStatus.isReady) return@LaunchedEffect
+            if (protectionStatus.isReady || protectionStatus.protectionRunning) return@LaunchedEffect
             delay(350)
             refreshProtectionStatus()
+        }
+
+        if (!foregroundRecoveryAttempted && canAttemptForegroundRecovery()) {
+            foregroundRecoveryAttempted = true
+            attemptForegroundRecovery()
+        }
+    }
+
+    LaunchedEffect(foregroundRecoveryNonce) {
+        if (foregroundRecoveryNonce == 0) return@LaunchedEffect
+        delay(4_000)
+        refreshProtectionStatus()
+        if (canAttemptForegroundRecovery()) {
+            showForegroundRecoveryDialog = true
+        } else {
+            showForegroundRecoveryDialog = false
         }
     }
 
@@ -275,7 +295,11 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
                     when (primaryRepairActionFor(protectionStatus)) {
                         ProtectionRepairAction.ENABLE_LISTENER,
                         ProtectionRepairAction.ENABLE_ALERTS -> runPrimaryRepairAction(protectionStatus)
-                        ProtectionRepairAction.FIX_FOREGROUND_NOTIFICATION -> context.fixForegroundNotification(protectionStatus)
+                        ProtectionRepairAction.FIX_FOREGROUND_NOTIFICATION -> {
+                            if (!attemptForegroundRecovery()) {
+                                context.fixForegroundNotification(protectionStatus)
+                            }
+                        }
                         ProtectionRepairAction.NONE -> {
                     val info = checkNowWorkInfo
                     val isAlreadyRunning =
@@ -362,6 +386,21 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
                     context.openAppNotificationSettings()
                 },
                 onDismiss = { showNotificationPermissionBlocker = false },
+            )
+        }
+
+        if (showForegroundRecoveryDialog) {
+            ForegroundRecoveryDialog(
+                showXiaomiHint = xiaomiInfo.shouldShowGuidance,
+                onOpenNotifications = {
+                    showForegroundRecoveryDialog = false
+                    context.openAppNotificationSettings()
+                },
+                onOpenChannel = {
+                    showForegroundRecoveryDialog = false
+                    context.openForegroundChannelSettings()
+                },
+                onDismiss = { showForegroundRecoveryDialog = false },
             )
         }
     }
@@ -464,12 +503,12 @@ private fun ProtectionStatusCard(
                 ok = report.listenerOk,
             )
             ProtectionStatusRow(
-                label = stringResource(R.string.setup_status_service_simple),
+                label = stringResource(R.string.setup_status_notification_permission_simple),
                 ok = report.notificationsAllowed && report.postNotificationsOk,
             )
             ProtectionStatusRow(
                 label = stringResource(R.string.setup_status_foreground_notification_simple),
-                ok = report.foregroundChannelOk,
+                ok = report.protectionRunning,
                 okText = stringResource(R.string.setup_status_active),
                 missingText = stringResource(R.string.setup_status_inactive),
             )
@@ -499,6 +538,48 @@ private fun ProtectionStatusCard(
             }
         }
     }
+}
+
+@Composable
+private fun ForegroundRecoveryDialog(
+    showXiaomiHint: Boolean,
+    onOpenNotifications: () -> Unit,
+    onOpenChannel: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(text = stringResource(R.string.setup_foreground_hidden_dialog_title))
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(text = stringResource(R.string.setup_foreground_hidden_dialog_body))
+                if (showXiaomiHint) {
+                    Text(
+                        text = stringResource(R.string.setup_foreground_hidden_dialog_xiaomi_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onOpenNotifications) {
+                Text(text = stringResource(R.string.setup_foreground_hidden_dialog_notifications))
+            }
+        },
+        dismissButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onOpenChannel) {
+                    Text(text = stringResource(R.string.setup_foreground_hidden_dialog_channel))
+                }
+                TextButton(onClick = onDismiss) {
+                    Text(text = stringResource(R.string.continue_btn))
+                }
+            }
+        },
+    )
 }
 
 @Composable

@@ -15,7 +15,9 @@ internal fun primaryRepairActionFor(report: ProtectionStatusReport): ProtectionR
     when {
         !report.listenerOk -> ProtectionRepairAction.ENABLE_LISTENER
         !report.alertsReady -> ProtectionRepairAction.ENABLE_ALERTS
-        !report.foregroundNotificationAllowed -> ProtectionRepairAction.FIX_FOREGROUND_NOTIFICATION
+        !report.foregroundNotificationAllowed || !report.foregroundNotificationVisible -> {
+            ProtectionRepairAction.FIX_FOREGROUND_NOTIFICATION
+        }
         else -> ProtectionRepairAction.NONE
     }
 
@@ -25,6 +27,6 @@ internal fun primaryActionLabelResIdFor(action: ProtectionRepairAction): Int =
         ProtectionRepairAction.NONE -> R.string.setup_action_check_rules
         ProtectionRepairAction.ENABLE_LISTENER,
         ProtectionRepairAction.ENABLE_ALERTS,
-        ProtectionRepairAction.FIX_FOREGROUND_NOTIFICATION,
         -> R.string.setup_action_activate
+        ProtectionRepairAction.FIX_FOREGROUND_NOTIFICATION -> R.string.setup_action_fix_foreground_notification
     }
