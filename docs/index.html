@@ -22,6 +22,10 @@
     a:hover { text-decoration: underline; }
     footer { margin-top: 16px; opacity: 0.8; font-size: 12.5px; }
     .note { margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.10); }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+    .button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 16px; border-radius: 999px; font-weight: 700; }
+    .button-primary { background: #9dd2ff; color: #0b1220; }
+    .button-secondary { border: 1px solid rgba(255,255,255,0.16); color: #e7eefc; }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
   </style>
 </head>
@@ -44,6 +48,11 @@
         O <strong>SMS Seguro</strong> é uma aplicação Android open source criada para ajudar a detetar mensagens SMS potencialmente fraudulentas (smishing),
         com foco em padrões comuns em Portugal (ex.: links suspeitos, pedidos de pagamento Multibanco, pedidos de códigos).
       </p>
+
+      <div class="actions">
+        <a class="button button-primary" href="./ativar-protecao-xiaomi.html">Ajuda Xiaomi / MIUI</a>
+        <a class="button button-secondary" href="https://github.com/LoadingHappiness-cg/SMS_Seguro">Repositório GitHub</a>
+      </div>
 
       <h2>1) Recolha de dados</h2>
       <p><strong>O SMS Seguro não recolhe dados pessoais</strong> e não cria contas de utilizador.</p>

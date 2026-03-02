@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ativar Proteção no Xiaomi — SMS Seguro</title>
+  <meta
+    name="description"
+    content="Guia simples para ativar o SMS Seguro em Xiaomi e MIUI: notificações, aviso Perigo, bateria, auto-start e permissões restritas."
+  />
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(87, 179, 133, 0.18), transparent 28%),
+        linear-gradient(180deg, #eef7f2 0%, #f9fbf9 100%);
+      color: #112017;
+    }
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 24px 16px 56px;
+    }
+    .hero,
+    .section,
+    .step {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(17, 32, 23, 0.08);
+      border-radius: 24px;
+      box-shadow: 0 18px 45px rgba(17, 32, 23, 0.08);
+    }
+    .hero {
+      padding: 24px;
+      margin-bottom: 18px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .brand img {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: #f2f8f4;
+      padding: 8px;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: #e7f5ec;
+      color: #1f6a42;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: clamp(30px, 5vw, 44px);
+      line-height: 1.08;
+      margin: 0 0 10px;
+    }
+    .lead {
+      font-size: 19px;
+      line-height: 1.55;
+      margin: 0;
+      max-width: 44rem;
+    }
+    .grid {
+      display: grid;
+      gap: 18px;
+    }
+    .section {
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+    .section h2 {
+      font-size: 24px;
+      margin: 0 0 12px;
+    }
+    .section p,
+    .section li,
+    .step p,
+    .step li {
+      font-size: 17px;
+      line-height: 1.6;
+    }
+    .section ul,
+    .step ul {
+      margin: 12px 0 0 22px;
+      padding: 0;
+    }
+    .steps {
+      display: grid;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .step {
+      overflow: hidden;
+    }
+    .step-copy {
+      padding: 22px 22px 8px;
+    }
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      background: #1f6a42;
+      color: white;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .step h3 {
+      font-size: 28px;
+      line-height: 1.15;
+      margin: 0 0 10px;
+    }
+    .step figure {
+      margin: 0;
+      padding: 0 22px 22px;
+    }
+    .step img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 22px;
+      border: 1px solid rgba(17, 32, 23, 0.08);
+      background: #f6f8f7;
+    }
+    figcaption {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #4b5d50;
+    }
+    .warning {
+      background: #fff4e8;
+      border: 1px solid #f2d0a7;
+      color: #7b4c14;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 18px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .button-primary {
+      background: #1f6a42;
+      color: white;
+    }
+    .button-secondary {
+      background: #edf3ef;
+      color: #112017;
+      border: 1px solid rgba(17, 32, 23, 0.1);
+    }
+    .mini-grid {
+      display: grid;
+      gap: 18px;
+    }
+    footer {
+      margin-top: 22px;
+      font-size: 14px;
+      color: #4b5d50;
+    }
+    @media (min-width: 760px) {
+      .steps,
+      .mini-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .span-2 {
+        grid-column: 1 / -1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="brand">
+        <img src="./assets/logo.png" alt="SMS Seguro logo" />
+        <div class="eyebrow">Guia Xiaomi / MIUI</div>
+      </div>
+      <h1>Ativar proteção no Xiaomi</h1>
+      <p class="lead">
+        Guia simples, com imagens, para ativar o SMS Seguro num Xiaomi. O aviso
+        “Perigo” pode aparecer. É normal neste passo.
+      </p>
+      <div class="actions">
+        <a class="button button-primary" href="./">Voltar ao site principal</a>
+        <a class="button button-secondary" href="https://github.com/LoadingHappiness-cg/SMS_Seguro">Ver repositório</a>
+      </div>
+    </section>
+
+    <section class="section warning">
+      <h2>Antes de começar</h2>
+      <ul>
+        <li>O SMS Seguro precisa de acesso às notificações para avisar a tempo.</li>
+        <li>Nada do conteúdo do SMS é enviado para a internet.</li>
+        <li>Se o Xiaomi mostrar “Perigo”, pode continuar.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>Como ativar</h2>
+      <div class="steps">
+        <article class="step">
+          <div class="step-copy">
+            <div class="step-number">1</div>
+            <h3>Abra a app e toque em Ativar</h3>
+            <p>
+              Se a proteção estiver incompleta, toque no botão principal
+              <strong>Ativar</strong>.
+            </p>
+          </div>
+          <figure>
+            <img src="./images/xiaomi/01-protecao-incompleta.jpg" alt="Ecrã da app com proteção incompleta e botão Ativar" />
+            <figcaption>Na tab Proteção, toque em “Ativar”.</figcaption>
+          </figure>
+        </article>
+
+        <article class="step">
+          <div class="step-copy">
+            <div class="step-number">2</div>
+            <h3>Procure SMS Seguro</h3>
+            <p>
+              Vai abrir a lista de apps com acesso a notificações. Procure
+              <strong>SMS Seguro</strong>.
+            </p>
+          </div>
+          <figure>
+            <img src="./images/xiaomi/02-lista-apps.jpg" alt="Lista de apps no ecrã de acesso às notificações com SMS Seguro visível" />
+            <figcaption>Procure “SMS Seguro” na lista.</figcaption>
+          </figure>
+        </article>
+
+        <article class="step span-2">
+          <div class="step-copy">
+            <div class="step-number">3</div>
+            <h3>Ative Ler notificações</h3>
+            <p>
+              Toque em <strong>SMS Seguro</strong> e depois ligue o interruptor
+              principal. Se aparecer um aviso com “Perigo”, é normal.
+            </p>
+          </div>
+          <figure>
+            <img src="./images/xiaomi/03-detalhe-sms-seguro.jpg" alt="Detalhe do SMS Seguro no ecrã de leitura e controlo de notificações" />
+            <figcaption>Ative o interruptor principal do SMS Seguro.</figcaption>
+          </figure>
+          <figure>
+            <img src="./images/xiaomi/04-aviso-perigo.jpg" alt="Aviso Perigo da Xiaomi antes de confirmar o acesso às notificações" />
+            <figcaption>Se aparecer este aviso da Xiaomi, pode continuar.</figcaption>
+          </figure>
+        </article>
+
+        <article class="step span-2">
+          <div class="step-copy">
+            <div class="step-number">4</div>
+            <h3>Volte para a app</h3>
+            <p>
+              Quando voltar, a app deve deixar de mostrar falhas nos itens
+              principais. A notificação persistente também deve aparecer.
+            </p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Xiaomi / MIUI: o que mais deve verificar</h2>
+      <p>
+        Sem estes passos, a MIUI pode desligar a proteção para poupar bateria.
+      </p>
+      <div class="mini-grid">
+        <article class="step">
+          <div class="step-copy">
+            <h3>Bateria</h3>
+            <p>Defina a bateria do SMS Seguro como <strong>Sem restrições</strong>.</p>
+          </div>
+          <figure>
+            <img src="./images/xiaomi/07-bateria-sem-restricoes.jpg" alt="Detalhes da bateria do SMS Seguro com a opção Sem restrições ativa" />
+            <figcaption>A MIUI não deve restringir a app.</figcaption>
+          </figure>
+        </article>
+
+        <article class="step">
+          <div class="step-copy">
+            <h3>Auto-start</h3>
+            <p>Ative <strong>Início automático</strong>, se existir no seu modelo.</p>
+          </div>
+          <figure>
+            <img src="./images/xiaomi/06-autostart.jpg" alt="Ecrã de início automático em segundo plano com SMS Seguro ativo" />
+            <figcaption>Permita que a app arranque em segundo plano.</figcaption>
+          </figure>
+        </article>
+
+        <article class="step">
+          <div class="step-copy">
+            <h3>Notificações da app</h3>
+            <p>
+              Confirme que <strong>Mostrar notificações</strong> e
+              <strong>Notificações permanentes</strong> estão ativas.
+            </p>
+          </div>
+          <figure>
+            <img src="./images/xiaomi/05-definicoes-notificacoes-app.jpg" alt="Definições de notificações da app SMS Seguro" />
+            <figcaption>A notificação persistente precisa destas opções ligadas.</figcaption>
+          </figure>
+        </article>
+
+        <article class="step">
+          <div class="step-copy">
+            <h3>Definições restritas</h3>
+            <p>
+              Se o seu modelo mostrar esta opção, permita-a no caminho:
+              <strong>Definições → Apps → SMS Seguro</strong>.
+            </p>
+          </div>
+          <figure>
+            <img src="./images/xiaomi/08-definicoes-restritas.jpg" alt="Informação da aplicação com Permitir definições restritas ativo" />
+            <figcaption>Nem todos os modelos mostram este passo.</figcaption>
+          </figure>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Se algo falhar</h2>
+      <ul>
+        <li>Confirme que <strong>Acesso às notificações</strong> está ativo.</li>
+        <li>Confirme que <strong>Notificações permitidas</strong> está ativo.</li>
+        <li>Confirme que a <strong>Notificação persistente</strong> está visível.</li>
+        <li>Volte à secção Xiaomi / MIUI na app e use os botões de reparação.</li>
+      </ul>
+    </section>
+
+    <footer>
+      Tutorial publicado em GitHub Pages a partir da pasta <code>docs/</code> do
+      repositório SMS Seguro.
+    </footer>
+  </div>
+</body>
+</html>
