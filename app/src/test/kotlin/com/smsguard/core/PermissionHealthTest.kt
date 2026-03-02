@@ -15,6 +15,8 @@ class PermissionHealthTest {
                 postNotificationsOk = true,
                 alertChannelOk = true,
                 foregroundNotificationAllowed = true,
+                foregroundChannelOk = true,
+                foregroundNotificationVisible = true,
             )
 
         assertTrue(report.isReady)
@@ -29,6 +31,8 @@ class PermissionHealthTest {
                 postNotificationsOk = true,
                 alertChannelOk = true,
                 foregroundNotificationAllowed = true,
+                foregroundChannelOk = true,
+                foregroundNotificationVisible = true,
             )
 
         assertFalse(report.isReady)
@@ -43,6 +47,8 @@ class PermissionHealthTest {
                 postNotificationsOk = true,
                 alertChannelOk = true,
                 foregroundNotificationAllowed = true,
+                foregroundChannelOk = true,
+                foregroundNotificationVisible = true,
             ).isReady,
         )
         assertFalse(
@@ -52,6 +58,8 @@ class PermissionHealthTest {
                 postNotificationsOk = false,
                 alertChannelOk = true,
                 foregroundNotificationAllowed = true,
+                foregroundChannelOk = true,
+                foregroundNotificationVisible = true,
             ).isReady,
         )
         assertFalse(
@@ -61,6 +69,8 @@ class PermissionHealthTest {
                 postNotificationsOk = true,
                 alertChannelOk = false,
                 foregroundNotificationAllowed = true,
+                foregroundChannelOk = true,
+                foregroundNotificationVisible = true,
             ).isReady,
         )
         assertFalse(
@@ -70,7 +80,25 @@ class PermissionHealthTest {
                 postNotificationsOk = true,
                 alertChannelOk = true,
                 foregroundNotificationAllowed = false,
+                foregroundChannelOk = false,
+                foregroundNotificationVisible = false,
             ).isReady,
         )
+    }
+
+    @Test
+    fun protectionReady_failsWhenForegroundNotificationIsNotVisible() {
+        val report =
+            protectionStatusReport(
+                listenerOk = true,
+                notificationsAllowed = true,
+                postNotificationsOk = true,
+                alertChannelOk = true,
+                foregroundNotificationAllowed = true,
+                foregroundChannelOk = true,
+                foregroundNotificationVisible = false,
+            )
+
+        assertFalse(report.isReady)
     }
 }

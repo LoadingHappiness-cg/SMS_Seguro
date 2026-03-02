@@ -10,12 +10,13 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.widget.Toast
 import com.smsguard.R
+import com.smsguard.core.NotificationPermission
 import com.smsguard.core.ProtectionStatusReport
 import com.smsguard.core.PermissionHealth
 import com.smsguard.core.xiaomiSupportInfo
 import com.smsguard.notification.AlertNotifierChannels
 import com.smsguard.notification.ForegroundServiceNotifier
-import com.smsguard.startup.SmsProtectionService
+import com.smsguard.startup.ProtectionServiceStarter
 
 private const val XIAOMI_TUTORIAL_URL = "https://loadinghappiness-cg.github.io/SMS_Seguro/ativar-protecao-xiaomi.html"
 private const val PROTECTION_DEEP_LINK_URL = "smsseguro://protecao"
@@ -47,41 +48,34 @@ internal fun Context.openAppNotificationSettings() {
     openIntentSafely(intent)
 }
 
-internal fun Context.openAlertChannelSettings() {
+internal fun Context.openChannelSettings(channelId: String) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         val intent =
             Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).apply {
                 putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-                putExtra(Settings.EXTRA_CHANNEL_ID, AlertNotifierChannels.CHANNEL_ID)
+                putExtra(Settings.EXTRA_CHANNEL_ID, channelId)
             }
         openIntentSafely(intent) { openAppNotificationSettings() }
         return
     }
 
     openAppNotificationSettings()
+}
+
+internal fun Context.openAlertChannelSettings() {
+    openChannelSettings(AlertNotifierChannels.CHANNEL_ID)
 }
 
 internal fun Context.openForegroundChannelSettings() {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        val intent =
-            Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).apply {
-                putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-                putExtra(Settings.EXTRA_CHANNEL_ID, ForegroundServiceNotifier.CHANNEL_ID)
-            }
-        openIntentSafely(intent) { openAppNotificationSettings() }
-        return
-    }
-
-    openAppNotificationSettings()
+    openChannelSettings(ForegroundServiceNotifier.CHANNEL_ID)
 }
 
 internal fun Context.fixForegroundNotification(report: ProtectionStatusReport) {
-    val permissionHealth = PermissionHealth(this)
-
     when {
         !report.alertsReady -> openAlertDeliverySettings(report)
-        !permissionHealth.isForegroundNotificationAllowed() -> openForegroundChannelSettings()
-        !report.foregroundNotificationAllowed -> restartProtectionService()
+        !report.postNotificationsOk || !NotificationPermission.isGranted(this) -> openAppNotificationSettings()
+        !report.foregroundChannelOk -> openForegroundChannelSettings()
+        !report.foregroundNotificationVisible -> restartProtectionService()
         else -> openAppNotificationSettings()
     }
 }
@@ -173,13 +167,7 @@ internal fun Context.openXiaomiTutorial() {
 }
 
 internal fun Context.restartProtectionService() {
-    val serviceIntent = Intent(this, SmsProtectionService::class.java)
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        startForegroundService(serviceIntent)
-    } else {
-        startService(serviceIntent)
-    }
-
+    ProtectionServiceStarter.start(this)
     Toast.makeText(this, getString(R.string.setup_foreground_restart_toast), Toast.LENGTH_LONG).show()
 }
 

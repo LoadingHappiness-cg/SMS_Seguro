@@ -25,6 +25,8 @@
     <string name="protection_incomplete">Proteção incompleta — toque para concluir.</string>
     <string name="continue_btn">Continuar</string>
     <string name="notifications_needed_msg">Sem notificações, o SMS Seguro não consegue alertar.</string>
+    <string name="notification_permission_blocker_title">Sem esta permissão não conseguimos manter a notificação de proteção</string>
+    <string name="notification_permission_blocker_body">Ative as notificações do SMS Seguro para manter a proteção ativa e visível.</string>
     <string name="sms_fallback_denied_msg">Sem esta permissão, alguns telemóveis podem falhar alertas em segundo plano.</string>
     <string name="open_settings">Abrir definições</string>
     <string name="setup_app_brand">SMS Seguro</string>

@@ -17,24 +17,25 @@ data class ProtectionStatusReport(
     val postNotificationsOk: Boolean,
     val alertChannelOk: Boolean,
     val foregroundNotificationAllowed: Boolean,
+    val foregroundChannelOk: Boolean,
+    val foregroundNotificationVisible: Boolean,
 ) {
     val alertsReady: Boolean
         get() = notificationsAllowed && postNotificationsOk && alertChannelOk
 
     val isReady: Boolean
-        get() = listenerOk && alertsReady && foregroundNotificationAllowed
+        get() = listenerOk && alertsReady && foregroundNotificationVisible
 }
 
 class PermissionHealth(
     private val context: Context,
 ) {
+    val postNotificationsGranted: Boolean
+        get() = NotificationPermission.isGranted(context)
+
     val needsPostNotifications: Boolean
         get() {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false
-            return ContextCompat.checkSelfPermission(
-                context,
-                android.Manifest.permission.POST_NOTIFICATIONS,
-            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+            return !postNotificationsGranted
         }
 
     val notificationsEnabled: Boolean
@@ -109,7 +110,9 @@ class PermissionHealth(
             notificationsAllowed = notificationsEnabled,
             postNotificationsOk = !needsPostNotifications,
             alertChannelOk = alertChannelOk,
-            foregroundNotificationAllowed = foregroundNotificationVisible,
+            foregroundNotificationAllowed = isForegroundNotificationAllowed(),
+            foregroundChannelOk = foregroundNotificationChannelOk,
+            foregroundNotificationVisible = foregroundNotificationVisible,
         )
 
     fun isProtectionReady(): Boolean {
@@ -123,6 +126,8 @@ internal fun protectionStatusReport(
     postNotificationsOk: Boolean,
     alertChannelOk: Boolean,
     foregroundNotificationAllowed: Boolean,
+    foregroundChannelOk: Boolean = foregroundNotificationAllowed,
+    foregroundNotificationVisible: Boolean = foregroundNotificationAllowed,
 ): ProtectionStatusReport =
     ProtectionStatusReport(
         listenerOk = listenerOk,
@@ -130,4 +135,6 @@ internal fun protectionStatusReport(
         postNotificationsOk = postNotificationsOk,
         alertChannelOk = alertChannelOk,
         foregroundNotificationAllowed = foregroundNotificationAllowed,
+        foregroundChannelOk = foregroundChannelOk,
+        foregroundNotificationVisible = foregroundNotificationVisible,
     )

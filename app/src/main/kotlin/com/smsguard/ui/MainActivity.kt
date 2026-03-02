@@ -22,8 +22,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.smsguard.core.NotificationPermission
 import com.smsguard.core.PermissionHealth
-import com.smsguard.startup.SmsProtectionService
+import com.smsguard.startup.ProtectionServiceStarter
 import com.smsguard.ui.theme.SMSGuardTheme
 
 class MainActivity : ComponentActivity() {
@@ -83,13 +84,10 @@ fun MainScreen(launchIntent: Intent? = null) {
     }
 
     LaunchedEffect(Unit) {
-        val serviceIntent = Intent(context, SmsProtectionService::class.java)
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            context.startForegroundService(serviceIntent)
-        } else {
-            context.startService(serviceIntent)
+        val health = PermissionHealth(context)
+        if (NotificationPermission.isGranted(context) && health.foregroundNotificationChannelOk) {
+            ProtectionServiceStarter.start(context)
         }
-
         refreshProtectionReady()
         if (!isProtectionReady) {
             selectedTab = 0

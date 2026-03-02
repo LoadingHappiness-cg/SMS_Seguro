@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smsguard.R
@@ -125,13 +126,13 @@ fun SeniorActivationScreen(
                     style = MaterialTheme.typography.headlineMedium.copy(fontSize = 32.sp, lineHeight = 38.sp),
                     color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    textAlign = TextAlign.Center,
                 )
                 Text(
                     text = stringResource(R.string.protection_activation_body),
                     style = MaterialTheme.typography.bodyLarge.copy(fontSize = 21.sp, lineHeight = 31.sp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    textAlign = TextAlign.Center,
                 )
 
                 Column(
@@ -146,7 +147,7 @@ fun SeniorActivationScreen(
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth(),
                     )
 
@@ -185,6 +186,89 @@ private fun ActivationStepRow(
             style = MaterialTheme.typography.bodyLarge.copy(fontSize = 21.sp, lineHeight = 30.sp),
             color = MaterialTheme.colorScheme.onSurface,
         )
+    }
+}
+
+@Composable
+fun NotificationPermissionBlockerScreen(
+    onOpenSettings: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.surface,
+        bottomBar = {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Button(
+                    onClick = onOpenSettings,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 80.dp),
+                    shape = MaterialTheme.shapes.large,
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                ) {
+                    Text(
+                        text = stringResource(R.string.setup_action_enable_notifications),
+                        style = MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp),
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        text = stringResource(R.string.protection_activation_not_now),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+            }
+        },
+    ) { innerPadding ->
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 24.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Security,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(56.dp),
+                )
+                Text(
+                    text = stringResource(R.string.notification_permission_blocker_title),
+                    style = MaterialTheme.typography.headlineMedium.copy(fontSize = 32.sp, lineHeight = 38.sp),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = stringResource(R.string.notification_permission_blocker_body),
+                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 21.sp, lineHeight = 31.sp),
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }
 

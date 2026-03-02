@@ -36,10 +36,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.smsguard.R
+import com.smsguard.core.NotificationPermission
 import com.smsguard.core.PermissionHealth
 import com.smsguard.core.xiaomiSupportInfo
 import com.smsguard.notification.ForegroundServiceNotifier
@@ -72,6 +73,7 @@ fun SetupPermissionsScreen(
 
     val showNotificationsDeniedMsg = remember { mutableStateOf(false) }
     val showActivationPrompt = remember { mutableStateOf(false) }
+    val showNotificationPermissionBlocker = remember { mutableStateOf(false) }
     var protectionRefreshNonce by remember { mutableIntStateOf(0) }
     var foregroundRecoveryAttempted by remember { mutableStateOf(false) }
 
@@ -83,8 +85,9 @@ fun SetupPermissionsScreen(
         isIgnoringBatteryOptimizations.value = health.isIgnoringBatteryOptimizations
 
         if (health.hasNotificationListenerAccess &&
-            health.isForegroundNotificationAllowed() &&
-            !ForegroundServiceNotifier.isNotificationVisible(context) &&
+            health.postNotificationsGranted &&
+            health.foregroundNotificationChannelOk &&
+            !health.foregroundNotificationVisible &&
             !foregroundRecoveryAttempted
         ) {
             foregroundRecoveryAttempted = true
@@ -99,6 +102,7 @@ fun SetupPermissionsScreen(
     val requestNotificationsPermission =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             showNotificationsDeniedMsg.value = !granted
+            showNotificationPermissionBlocker.value = !granted
             refresh()
         }
 
@@ -147,7 +151,11 @@ fun SetupPermissionsScreen(
                 context.openAppNotificationSettings()
             },
             onListenerClick = {
-                showActivationPrompt.value = true
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !NotificationPermission.isGranted(context)) {
+                    requestNotificationsPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                } else {
+                    showActivationPrompt.value = true
+                }
             },
             onBatteryClick = {
                 context.openBatteryOptimizationSettings()
@@ -174,6 +182,16 @@ fun SetupPermissionsScreen(
                 onDismiss = {
                     showActivationPrompt.value = false
                 },
+            )
+        }
+
+        if (showNotificationPermissionBlocker.value) {
+            NotificationPermissionBlockerScreen(
+                onOpenSettings = {
+                    showNotificationPermissionBlocker.value = false
+                    context.openAppNotificationSettings()
+                },
+                onDismiss = { showNotificationPermissionBlocker.value = false },
             )
         }
     }

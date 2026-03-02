@@ -3,6 +3,9 @@ package com.smsguard.ui
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
@@ -57,6 +60,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.smsguard.R
+import com.smsguard.core.NotificationPermission
 import com.smsguard.core.PermissionHealth
 import com.smsguard.core.ProtectionStatusReport
 import com.smsguard.core.XiaomiSupportInfo
@@ -86,6 +90,7 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
     var protectionStatus by remember { mutableStateOf(PermissionHealth(context).protectionStatusReport()) }
     var ignoresBatteryOptimizations by remember { mutableStateOf(PermissionHealth(context).isIgnoringBatteryOptimizations) }
     var showActivationPrompt by remember { mutableStateOf(false) }
+    var showNotificationPermissionBlocker by remember { mutableStateOf(false) }
     var protectionRefreshNonce by remember { mutableIntStateOf(0) }
     var foregroundRecoveryAttempted by remember { mutableStateOf(false) }
 
@@ -95,8 +100,9 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
         ignoresBatteryOptimizations = health.isIgnoringBatteryOptimizations
 
         if (health.hasNotificationListenerAccess &&
-            health.isForegroundNotificationAllowed() &&
-            !ForegroundServiceNotifier.isNotificationVisible(context) &&
+            health.postNotificationsGranted &&
+            health.foregroundNotificationChannelOk &&
+            !health.foregroundNotificationVisible &&
             !foregroundRecoveryAttempted
         ) {
             foregroundRecoveryAttempted = true
@@ -108,10 +114,36 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
         }
     }
 
+    val requestNotificationsPermission =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                showNotificationPermissionBlocker = false
+                refreshProtectionStatus()
+                if (!protectionStatus.listenerOk) {
+                    showActivationPrompt = true
+                }
+            } else {
+                showNotificationPermissionBlocker = true
+                refreshProtectionStatus()
+            }
+        }
+
     fun runPrimaryRepairAction(report: ProtectionStatusReport = protectionStatus) {
         when (primaryRepairActionFor(report)) {
-            ProtectionRepairAction.ENABLE_LISTENER -> showActivationPrompt = true
-            ProtectionRepairAction.ENABLE_ALERTS -> context.openAlertDeliverySettings(report)
+            ProtectionRepairAction.ENABLE_LISTENER -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !NotificationPermission.isGranted(context)) {
+                    requestNotificationsPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                } else {
+                    showActivationPrompt = true
+                }
+            }
+            ProtectionRepairAction.ENABLE_ALERTS -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !NotificationPermission.isGranted(context)) {
+                    requestNotificationsPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                } else {
+                    context.openAlertDeliverySettings(report)
+                }
+            }
             ProtectionRepairAction.FIX_FOREGROUND_NOTIFICATION -> context.fixForegroundNotification(report)
             ProtectionRepairAction.NONE -> Unit
         }
@@ -241,8 +273,8 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
                 primaryAction = primaryRepairActionFor(protectionStatus),
                 onPrimaryAction = {
                     when (primaryRepairActionFor(protectionStatus)) {
-                        ProtectionRepairAction.ENABLE_LISTENER -> showActivationPrompt = true
-                        ProtectionRepairAction.ENABLE_ALERTS -> context.openAlertDeliverySettings(protectionStatus)
+                        ProtectionRepairAction.ENABLE_LISTENER,
+                        ProtectionRepairAction.ENABLE_ALERTS -> runPrimaryRepairAction(protectionStatus)
                         ProtectionRepairAction.FIX_FOREGROUND_NOTIFICATION -> context.fixForegroundNotification(protectionStatus)
                         ProtectionRepairAction.NONE -> {
                     val info = checkNowWorkInfo
@@ -320,6 +352,16 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
                     context.openNotificationListenerSettingsWithPrompt()
                 },
                 onDismiss = { showActivationPrompt = false },
+            )
+        }
+
+        if (showNotificationPermissionBlocker) {
+            NotificationPermissionBlockerScreen(
+                onOpenSettings = {
+                    showNotificationPermissionBlocker = false
+                    context.openAppNotificationSettings()
+                },
+                onDismiss = { showNotificationPermissionBlocker = false },
             )
         }
     }
@@ -423,17 +465,17 @@ private fun ProtectionStatusCard(
             )
             ProtectionStatusRow(
                 label = stringResource(R.string.setup_status_service_simple),
-                ok = report.alertsReady,
+                ok = report.notificationsAllowed && report.postNotificationsOk,
             )
             ProtectionStatusRow(
                 label = stringResource(R.string.setup_status_foreground_notification_simple),
-                ok = report.foregroundNotificationAllowed,
+                ok = report.foregroundChannelOk,
                 okText = stringResource(R.string.setup_status_active),
                 missingText = stringResource(R.string.setup_status_inactive),
             )
             ProtectionStatusRow(
                 label = stringResource(R.string.setup_status_notification_visible_simple),
-                ok = report.isReady,
+                ok = report.foregroundNotificationVisible,
                 okText = stringResource(R.string.setup_status_active),
                 missingText = stringResource(R.string.setup_status_inactive),
             )
