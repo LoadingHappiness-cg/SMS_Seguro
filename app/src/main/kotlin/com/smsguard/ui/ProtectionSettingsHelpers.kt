@@ -11,9 +11,14 @@ import android.provider.Settings
 import android.widget.Toast
 import com.smsguard.R
 import com.smsguard.core.ProtectionStatusReport
+import com.smsguard.core.PermissionHealth
 import com.smsguard.core.xiaomiSupportInfo
 import com.smsguard.notification.AlertNotifierChannels
 import com.smsguard.notification.ForegroundServiceNotifier
+import com.smsguard.startup.SmsProtectionService
+
+private const val XIAOMI_TUTORIAL_URL = "https://loadinghappiness-cg.github.io/SMS_Seguro/ativar-protecao-xiaomi.html"
+private const val PROTECTION_DEEP_LINK_URL = "smsseguro://protecao"
 
 internal fun Context.openIntentSafely(
     intent: Intent,
@@ -71,9 +76,12 @@ internal fun Context.openForegroundChannelSettings() {
 }
 
 internal fun Context.fixForegroundNotification(report: ProtectionStatusReport) {
+    val permissionHealth = PermissionHealth(this)
+
     when {
         !report.alertsReady -> openAlertDeliverySettings(report)
-        !report.foregroundNotificationAllowed -> openForegroundChannelSettings()
+        !permissionHealth.isForegroundNotificationAllowed() -> openForegroundChannelSettings()
+        !report.foregroundNotificationAllowed -> restartProtectionService()
         else -> openAppNotificationSettings()
     }
 }
@@ -155,3 +163,24 @@ internal fun Context.openXiaomiAutoStartSettings() {
 
     Toast.makeText(this, getString(R.string.xiaomi_autostart_toast), Toast.LENGTH_LONG).show()
 }
+
+internal fun Context.openXiaomiTutorial() {
+    val intent =
+        Intent(Intent.ACTION_VIEW, Uri.parse(XIAOMI_TUTORIAL_URL)).apply {
+            addCategory(Intent.CATEGORY_BROWSABLE)
+        }
+    openIntentSafely(intent)
+}
+
+internal fun Context.restartProtectionService() {
+    val serviceIntent = Intent(this, SmsProtectionService::class.java)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        startForegroundService(serviceIntent)
+    } else {
+        startService(serviceIntent)
+    }
+
+    Toast.makeText(this, getString(R.string.setup_foreground_restart_toast), Toast.LENGTH_LONG).show()
+}
+
+internal fun protectionDeepLinkUri(): Uri = Uri.parse(PROTECTION_DEEP_LINK_URL)

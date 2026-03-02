@@ -4,32 +4,29 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import androidx.annotation.StringRes
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,7 +40,6 @@ private const val ACTIVATION_PROMPT_PREFS = "activation_prompt"
 private const val ACTIVATION_PROMPT_SHOWN_KEY = "activation_prompt_shown"
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 fun SeniorActivationScreen(
     showXiaomiNote: Boolean,
     onContinue: () -> Unit,
@@ -55,35 +51,28 @@ fun SeniorActivationScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.surface,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.protection_activation_title),
-                        style = MaterialTheme.typography.titleLarge,
-                    )
-                },
-            )
-        },
         bottomBar = {
             Column(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surface)
                         .padding(horizontal = 16.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Button(
                     onClick = onContinue,
-                    modifier = Modifier.fillMaxWidth().height(64.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 80.dp),
                     shape = MaterialTheme.shapes.large,
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 ) {
                     Text(
                         text = stringResource(R.string.protection_activation_continue),
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp),
                         fontWeight = FontWeight.Bold,
                     )
                 }
@@ -100,62 +89,65 @@ fun SeniorActivationScreen(
             }
         },
     ) { innerPadding ->
-        Column(
+        Box(
             modifier =
                 Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp, vertical = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
+                    .padding(horizontal = 24.dp),
         ) {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center,
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
             ) {
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.size(104.dp),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
+                Spacer(modifier = Modifier.height(24.dp))
+                Box(contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier.size(104.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
                         Icon(
                             imageVector = Icons.Outlined.Security,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(56.dp),
                         )
                     }
                 }
-            }
 
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Spacer(modifier = Modifier.height(28.dp))
                 Text(
-                    text = stringResource(R.string.protection_activation_heading),
+                    text = stringResource(R.string.protection_activation_title),
                     style = MaterialTheme.typography.headlineMedium.copy(fontSize = 32.sp, lineHeight = 38.sp),
                     color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 )
                 Text(
                     text = stringResource(R.string.protection_activation_body),
-                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 20.sp, lineHeight = 28.sp),
+                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 21.sp, lineHeight = 31.sp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 )
-            }
 
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                shape = MaterialTheme.shapes.large,
-            ) {
                 Column(
-                    modifier = Modifier.padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 28.dp),
+                    verticalArrangement = Arrangement.spacedBy(18.dp),
                 ) {
                     Text(
                         text = stringResource(R.string.protection_activation_steps_title),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
                     )
 
                     steps.forEachIndexed { index, stepResId ->
@@ -165,9 +157,9 @@ fun SeniorActivationScreen(
                         )
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(32.dp))
+            }
         }
     }
 }
@@ -177,26 +169,22 @@ private fun ActivationStepRow(
     number: Int,
     text: String,
 ) {
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-        shape = MaterialTheme.shapes.large,
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.Top,
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Text(
-                text = number.toString(),
-                style = MaterialTheme.typography.titleMedium.copy(fontSize = 24.sp),
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 20.sp, lineHeight = 28.sp),
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-        }
+        Text(
+            text = "$number.",
+            style = MaterialTheme.typography.titleLarge.copy(fontSize = 28.sp),
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge.copy(fontSize = 21.sp, lineHeight = 30.sp),
+            color = MaterialTheme.colorScheme.onSurface,
+        )
     }
 }
 

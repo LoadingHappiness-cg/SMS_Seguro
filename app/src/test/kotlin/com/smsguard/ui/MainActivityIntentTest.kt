@@ -39,6 +39,19 @@ class MainActivityIntentTest {
     }
 
     @Test
+    fun smsseguroProtectionDeepLink_selectsProtectionTab() {
+        assertEquals(
+            0,
+            resolveSelectedTab(
+                action = null,
+                tab = null,
+                dataScheme = MainActivity.DEEP_LINK_SCHEME,
+                dataHost = MainActivity.DEEP_LINK_HOST_PROTECTION,
+            ),
+        )
+    }
+
+    @Test
     fun aboutTabExtra_selectsAboutTab() {
         assertEquals(
             2,

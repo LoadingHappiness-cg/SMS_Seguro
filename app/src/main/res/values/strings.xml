@@ -44,8 +44,9 @@
     <string name="setup_status_alert_channel">Alertas importantes</string>
     <string name="setup_status_rules">Atualizações de regras</string>
     <string name="setup_status_listener_simple">Acesso às notificações</string>
-    <string name="setup_status_alerts_simple">Notificações permitidas</string>
-    <string name="setup_status_foreground_notification_simple">Notificação persistente ativa</string>
+    <string name="setup_status_service_simple">Serviço ativo</string>
+    <string name="setup_status_foreground_notification_simple">Proteção em execução</string>
+    <string name="setup_status_notification_visible_simple">Notificação visível</string>
     <string name="setup_status_rules_simple">Atualizações da base</string>
     <string name="setup_status_ok">Ativo</string>
     <string name="setup_status_missing">Em falta</string>
@@ -94,7 +95,7 @@
     <string name="about_url_source">https://github.com/LoadingHappiness-cg/SMS_Seguro</string>
     <string name="about_url_privacy">https://loadinghappiness-cg.github.io/SMS_Seguro/</string>
     <string name="dialog_open_browser_title">Abrir no navegador?</string>
-    <string name="dialog_open_browser_body">Vai sair do SMS Seguro e abrir o navegador do telefone.</string>
+    <string name="dialog_open_browser_body">Vai sair da aplicação.\n\nDeseja continuar?</string>
     <string name="dialog_open_browser_confirm">Abrir</string>
     <string name="dialog_open_browser_cancel">Cancelar</string>
     <string name="about_copy_link">Copiar link</string>
@@ -165,7 +166,7 @@ Recebi uma mensagem com um link e o SMS Seguro diz que parece perigoso e recomen
     <string name="unknown">Desconhecido</string>
     <string name="protection_activation_title">Ativar proteção automática</string>
     <string name="protection_activation_heading">Vamos ativar a proteção automática.</string>
-    <string name="protection_activation_body">Vamos pedir acesso às notificações de SMS. Nada sai do seu telemóvel. No Xiaomi pode aparecer um aviso “Perigo”. É normal. Pode continuar.</string>
+    <string name="protection_activation_body">Para te proteger contra burlas por SMS,\na app precisa de acesso às notificações.\n\nNada sai do telemóvel.\nTudo fica seguro aqui.</string>
     <string name="protection_activation_steps_title">Como fazer (4 passos)</string>
     <string name="protection_activation_step_1">Toque no botão verde.</string>
     <string name="protection_activation_step_2">Procure “SMS Seguro”.</string>
@@ -174,16 +175,16 @@ Recebi uma mensagem com um link e o SMS Seguro diz que parece perigoso e recomen
     <string name="protection_activation_step_xiaomi">Se aparecer um aviso “Perigo” da Xiaomi, é normal. Pode continuar.</string>
     <string name="protection_activation_continue">ATIVAR PROTEÇÃO AGORA</string>
     <string name="protection_activation_not_now">Agora não</string>
-    <string name="xiaomi_section_title">Xiaomi / MIUI (importante)</string>
-    <string name="xiaomi_section_body">Em alguns Xiaomi, o sistema pode bloquear a proteção para poupar bateria. Siga estes passos para garantir que o SMS Seguro funciona sempre.</string>
-    <string name="xiaomi_section_body_miui">No MIUI ou HyperOS, o sistema pode bloquear a proteção para poupar bateria. Siga estes passos para garantir que o SMS Seguro funciona sempre.</string>
+    <string name="xiaomi_section_title">Telemóvel Xiaomi detectado</string>
+    <string name="xiaomi_section_body">Nos telemóveis Xiaomi é preciso permitir algumas opções para a proteção funcionar sempre.</string>
+    <string name="xiaomi_section_body_miui">No MIUI ou HyperOS é preciso permitir algumas opções para a proteção funcionar sempre.</string>
     <string name="xiaomi_quick_step_battery">Bateria: definir como Sem restrições.</string>
     <string name="xiaomi_quick_step_battery_done">Bateria: sem restrições já está ativa.</string>
     <string name="xiaomi_quick_step_autostart">Ativar Auto-start, se existir.</string>
     <string name="xiaomi_quick_step_permissions">Permissões: permitir notificações e permissões restritas, se o modelo pedir.</string>
     <string name="xiaomi_battery_title">Bateria / Otimização</string>
     <string name="xiaomi_battery_body">Se a poupança de bateria estiver ativa, o Android pode interromper os alertas.</string>
-    <string name="xiaomi_battery_action">Abrir definições de bateria</string>
+    <string name="xiaomi_battery_action">Permitir sem restrições</string>
     <string name="xiaomi_restricted_permissions_title">Permissões restritas</string>
     <string name="xiaomi_restricted_permissions_body">Permissões restritas podem impedir alertas.</string>
     <string name="xiaomi_restricted_permissions_steps">Definições → Apps → SMS Seguro → Permissões → Permissões restritas → Permitir</string>
@@ -191,8 +192,9 @@ Recebi uma mensagem com um link e o SMS Seguro diz que parece perigoso e recomen
     <string name="xiaomi_autostart_title">Início automático / segundo plano</string>
     <string name="xiaomi_autostart_body">O SMS Seguro deve poder arrancar sozinho e continuar em segundo plano.</string>
     <string name="xiaomi_autostart_steps">Se não abrir diretamente, use: Definições → Apps → SMS Seguro → Início automático / Autostart</string>
-    <string name="xiaomi_autostart_action">Abrir Autostart</string>
+    <string name="xiaomi_autostart_action">Permitir início automático</string>
     <string name="xiaomi_system_action">Abrir definições do sistema</string>
+    <string name="xiaomi_tutorial_action">Guia especial para telemóveis Xiaomi</string>
     <string name="xiaomi_status_check">Verificar</string>
     <string name="xiaomi_battery_toast">Se não encontrar esta opção, abra a bateria da app SMS Seguro.</string>
     <string name="xiaomi_restricted_permissions_toast">Abra: Definições → Apps → SMS Seguro → Permissões → Permissões restritas → Permitir.</string>
@@ -203,8 +205,8 @@ Recebi uma mensagem com um link e o SMS Seguro diz que parece perigoso e recomen
     <string name="alert_channel_description">Alertas para links suspeitos em SMS</string>
     <string name="foreground_notification_channel_name">Proteção ativa</string>
     <string name="foreground_notification_channel_description">Notificação persistente para manter a proteção ativa.</string>
-    <string name="foreground_notification_title">SMS Seguro</string>
-    <string name="foreground_notification_text">Proteção ativa</string>
+    <string name="foreground_notification_title">Proteção ativa</string>
+    <string name="foreground_notification_text">SMS Seguro está a proteger mensagens</string>
 
     <!-- Risk levels -->
     <string name="risk_high">Perigo elevado</string>
@@ -266,6 +268,7 @@ Recebi uma mensagem com um link e o SMS Seguro diz que parece perigoso e recomen
     <string name="setup_action_fix_foreground_notification">Corrigir notificação persistente</string>
     <string name="setup_status_active">Ativa</string>
     <string name="setup_status_inactive">Desativada</string>
+    <string name="setup_foreground_restart_toast">A tentar restaurar a proteção em execução.</string>
     <string name="setup_diagnostics_title">Diagnóstico</string>
     <string name="setup_diagnostics_last_event">Último evento recebido</string>
     <string name="setup_diagnostics_last_risk">Último risco calculado</string>

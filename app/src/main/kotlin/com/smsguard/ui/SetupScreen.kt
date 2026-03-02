@@ -40,7 +40,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -67,12 +66,10 @@ import com.smsguard.notification.ForegroundServiceNotifier
 import com.smsguard.rules.RuleLoader
 import com.smsguard.update.RuleUpdateScheduler
 import com.smsguard.update.RuleUpdateWorker
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @Composable
 fun SetupScreen(repairRequestNonce: Int = 0) {
@@ -84,17 +81,31 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
     val xiaomiInfo = remember { context.xiaomiSupportInfo() }
 
     var rulesetVersion by remember { mutableIntStateOf(ruleLoader.loadCurrent().version) }
-    var lastCheckAt by remember { mutableLongStateOf(prefs.getLong("last_check_at", 0L)) }
     var isChecking by remember { mutableStateOf(false) }
     var statusMessageRes by remember { mutableStateOf<Int?>(null) }
     var protectionStatus by remember { mutableStateOf(PermissionHealth(context).protectionStatusReport()) }
     var ignoresBatteryOptimizations by remember { mutableStateOf(PermissionHealth(context).isIgnoringBatteryOptimizations) }
     var showActivationPrompt by remember { mutableStateOf(false) }
+    var protectionRefreshNonce by remember { mutableIntStateOf(0) }
+    var foregroundRecoveryAttempted by remember { mutableStateOf(false) }
 
     fun refreshProtectionStatus() {
         val health = PermissionHealth(context)
         protectionStatus = health.protectionStatusReport()
         ignoresBatteryOptimizations = health.isIgnoringBatteryOptimizations
+
+        if (health.hasNotificationListenerAccess &&
+            health.isForegroundNotificationAllowed() &&
+            !ForegroundServiceNotifier.isNotificationVisible(context) &&
+            !foregroundRecoveryAttempted
+        ) {
+            foregroundRecoveryAttempted = true
+            context.restartProtectionService()
+        }
+
+        if (health.foregroundNotificationVisible) {
+            foregroundRecoveryAttempted = false
+        }
     }
 
     fun runPrimaryRepairAction(report: ProtectionStatusReport = protectionStatus) {
@@ -109,7 +120,8 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                refreshProtectionStatus()
+                foregroundRecoveryAttempted = false
+                protectionRefreshNonce += 1
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -120,9 +132,8 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
         AlertNotifierChannels.ensure(context)
         ForegroundServiceNotifier.ensureChannel(context)
         RuleUpdateScheduler.schedulePeriodic(context)
-        refreshRulesetMeta(prefs, ruleLoader) { version, checkAt ->
+        refreshRulesetMeta(prefs, ruleLoader) { version, _ ->
             rulesetVersion = version
-            lastCheckAt = checkAt
         }
         refreshProtectionStatus()
     }
@@ -131,6 +142,15 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
         if (repairRequestNonce > 0) {
             refreshProtectionStatus()
             runPrimaryRepairAction()
+        }
+    }
+
+    LaunchedEffect(protectionRefreshNonce) {
+        refreshProtectionStatus()
+        repeat(3) {
+            if (protectionStatus.isReady) return@LaunchedEffect
+            delay(350)
+            refreshProtectionStatus()
         }
     }
 
@@ -174,9 +194,8 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
                         else -> R.string.update_failed
                     }
 
-                refreshRulesetMeta(prefs, ruleLoader) { version, checkAt ->
+                refreshRulesetMeta(prefs, ruleLoader) { version, _ ->
                     rulesetVersion = version
-                    lastCheckAt = checkAt
                 }
             }
         }
@@ -250,9 +269,6 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
                         }
                     }
                 },
-                rulesStatus = rulesUpdateStatus(isChecking, statusMessageRes, context),
-                rulesHealthy = rulesUpdateHealthy(isChecking, statusMessageRes),
-                lastCheckAt = lastCheckAt,
                 modifier = Modifier.padding(horizontal = 20.dp),
             )
 
@@ -261,7 +277,8 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
                     xiaomiInfo = xiaomiInfo,
                     ignoresBatteryOptimizations = ignoresBatteryOptimizations,
                     onOpenBatterySettings = { context.openBatteryOptimizationSettings() },
-                    onOpenSystemSettings = { context.openXiaomiAutoStartSettings() },
+                    onOpenAutoStartSettings = { context.openXiaomiAutoStartSettings() },
+                    onOpenTutorial = { context.openXiaomiTutorial() },
                     modifier = Modifier.padding(horizontal = 20.dp),
                 )
             }
@@ -381,12 +398,8 @@ private fun ProtectionStatusCard(
     report: ProtectionStatusReport,
     primaryAction: ProtectionRepairAction,
     onPrimaryAction: () -> Unit,
-    rulesStatus: String,
-    rulesHealthy: Boolean,
-    lastCheckAt: Long,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
     val primaryActionLabelResId = primaryActionLabelResIdFor(primaryAction)
 
     Card(
@@ -409,7 +422,7 @@ private fun ProtectionStatusCard(
                 ok = report.listenerOk,
             )
             ProtectionStatusRow(
-                label = stringResource(R.string.setup_status_alerts_simple),
+                label = stringResource(R.string.setup_status_service_simple),
                 ok = report.alertsReady,
             )
             ProtectionStatusRow(
@@ -419,10 +432,10 @@ private fun ProtectionStatusCard(
                 missingText = stringResource(R.string.setup_status_inactive),
             )
             ProtectionStatusRow(
-                label = stringResource(R.string.setup_status_rules_simple),
-                ok = rulesHealthy,
-                okText = rulesStatus,
-                missingText = rulesStatus,
+                label = stringResource(R.string.setup_status_notification_visible_simple),
+                ok = report.isReady,
+                okText = stringResource(R.string.setup_status_active),
+                missingText = stringResource(R.string.setup_status_inactive),
             )
 
             FilledTonalButton(
@@ -442,11 +455,6 @@ private fun ProtectionStatusCard(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(primaryActionLabelResId))
             }
-
-            SetupInfoRow(
-                label = stringResource(R.string.last_check),
-                value = formatLastCheck(lastCheckAt, context),
-            )
         }
     }
 }
@@ -492,7 +500,8 @@ private fun XiaomiGuidanceCard(
     xiaomiInfo: XiaomiSupportInfo,
     ignoresBatteryOptimizations: Boolean,
     onOpenBatterySettings: () -> Unit,
-    onOpenSystemSettings: () -> Unit,
+    onOpenAutoStartSettings: () -> Unit,
+    onOpenTutorial: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(
@@ -539,13 +548,23 @@ private fun XiaomiGuidanceCard(
             }
 
             FilledTonalButton(
-                onClick = onOpenSystemSettings,
+                onClick = onOpenAutoStartSettings,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
             ) {
                 Icon(Icons.Outlined.Security, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = stringResource(R.string.xiaomi_system_action))
+                Text(text = stringResource(R.string.xiaomi_autostart_action))
+            }
+
+            FilledTonalButton(
+                onClick = onOpenTutorial,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Icon(Icons.Outlined.Notifications, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = stringResource(R.string.xiaomi_tutorial_action))
             }
         }
     }
@@ -578,42 +597,11 @@ private fun XiaomiBullet(
     }
 }
 
-@Composable
-private fun SetupInfoRow(
-    label: String,
-    value: String,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.widthIn(max = 160.dp),
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.End,
-        )
-    }
-}
-
 private fun isNetworkConnected(context: Context): Boolean {
     val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return false
     val network = cm.activeNetwork ?: return false
     val caps = cm.getNetworkCapabilities(network) ?: return false
     return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-}
-
-private fun formatLastCheck(timestampMs: Long, context: Context): String {
-    if (timestampMs <= 0L) return context.getString(R.string.never)
-    val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale("pt", "PT"))
-    return sdf.format(Date(timestampMs))
 }
 
 internal fun debugDiagnosticsEnabled(@Suppress("UNUSED_PARAMETER") isDebugBuild: Boolean = false): Boolean = false

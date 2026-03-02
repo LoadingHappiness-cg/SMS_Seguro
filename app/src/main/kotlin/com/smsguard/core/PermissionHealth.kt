@@ -93,6 +93,12 @@ class PermissionHealth(
             return channel.importance != NotificationManager.IMPORTANCE_NONE
         }
 
+    val foregroundNotificationVisible: Boolean
+        get() {
+            if (!isForegroundNotificationAllowed()) return false
+            return ForegroundServiceNotifier.isNotificationVisible(context)
+        }
+
     fun isForegroundNotificationAllowed(): Boolean {
         return notificationsEnabled && !needsPostNotifications && foregroundNotificationChannelOk
     }
@@ -103,7 +109,7 @@ class PermissionHealth(
             notificationsAllowed = notificationsEnabled,
             postNotificationsOk = !needsPostNotifications,
             alertChannelOk = alertChannelOk,
-            foregroundNotificationAllowed = isForegroundNotificationAllowed(),
+            foregroundNotificationAllowed = foregroundNotificationVisible,
         )
 
     fun isProtectionReady(): Boolean {

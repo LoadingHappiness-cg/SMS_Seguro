@@ -50,6 +50,8 @@ class MainActivity : ComponentActivity() {
         const val EXTRA_TAB = "tab"
         const val TAB_PROTECTION = "protection"
         const val TAB_ABOUT = "about"
+        const val DEEP_LINK_SCHEME = "smsseguro"
+        const val DEEP_LINK_HOST_PROTECTION = "protecao"
     }
 }
 
@@ -174,16 +176,21 @@ internal fun resolveSelectedTab(intent: Intent?): Int =
     resolveSelectedTab(
         action = intent?.action,
         tab = intent?.getStringExtra(MainActivity.EXTRA_TAB),
+        dataScheme = intent?.data?.scheme,
+        dataHost = intent?.data?.host,
     )
 
 internal fun resolveSelectedTab(
     action: String?,
     tab: String?,
+    dataScheme: String? = null,
+    dataHost: String? = null,
 ): Int =
     when {
         action == MainActivity.ACTION_OPEN_PROTECTION -> 0
         tab == MainActivity.TAB_PROTECTION -> 0
         tab == "protecao" -> 0
+        dataScheme == MainActivity.DEEP_LINK_SCHEME && dataHost == MainActivity.DEEP_LINK_HOST_PROTECTION -> 0
         tab == MainActivity.TAB_ABOUT -> 2
         else -> 0
     }

@@ -54,11 +54,22 @@ object ForegroundServiceNotifier {
             .build()
     }
 
+    fun isNotificationVisible(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true
+
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            ?: return false
+
+        return manager.activeNotifications.any { notification ->
+            notification.id == NOTIFICATION_ID
+        }
+    }
+
     private fun buildOpenProtectionPendingIntent(context: Context): PendingIntent {
         val intent =
             Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                putExtra("tab", "protecao")
+                putExtra(MainActivity.EXTRA_TAB, "protecao")
             }
 
         return PendingIntent.getActivity(

@@ -38,6 +38,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -51,6 +54,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.smsguard.R
 import com.smsguard.core.PermissionHealth
 import com.smsguard.core.xiaomiSupportInfo
+import com.smsguard.notification.ForegroundServiceNotifier
+import kotlinx.coroutines.delay
 
 @Composable
 fun SetupPermissionsScreen(
@@ -67,6 +72,8 @@ fun SetupPermissionsScreen(
 
     val showNotificationsDeniedMsg = remember { mutableStateOf(false) }
     val showActivationPrompt = remember { mutableStateOf(false) }
+    var protectionRefreshNonce by remember { mutableIntStateOf(0) }
+    var foregroundRecoveryAttempted by remember { mutableStateOf(false) }
 
     fun refresh() {
         val health = PermissionHealth(context)
@@ -74,6 +81,19 @@ fun SetupPermissionsScreen(
         notificationsEnabled.value = health.notificationsEnabled
         hasListener.value = health.hasNotificationListenerAccess
         isIgnoringBatteryOptimizations.value = health.isIgnoringBatteryOptimizations
+
+        if (health.hasNotificationListenerAccess &&
+            health.isForegroundNotificationAllowed() &&
+            !ForegroundServiceNotifier.isNotificationVisible(context) &&
+            !foregroundRecoveryAttempted
+        ) {
+            foregroundRecoveryAttempted = true
+            context.restartProtectionService()
+        }
+
+        if (health.foregroundNotificationVisible) {
+            foregroundRecoveryAttempted = false
+        }
     }
 
     val requestNotificationsPermission =
@@ -85,7 +105,8 @@ fun SetupPermissionsScreen(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                refresh()
+                foregroundRecoveryAttempted = false
+                protectionRefreshNonce += 1
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -94,6 +115,15 @@ fun SetupPermissionsScreen(
 
     LaunchedEffect(Unit) {
         refresh()
+    }
+
+    LaunchedEffect(protectionRefreshNonce) {
+        refresh()
+        repeat(3) {
+            if (hasListener.value) return@LaunchedEffect
+            delay(350)
+            refresh()
+        }
     }
 
     val step1Ok = !needsPostNotifications.value && notificationsEnabled.value
