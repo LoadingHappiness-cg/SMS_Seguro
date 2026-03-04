@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -32,7 +31,7 @@ fun HistoryScreen() {
 
     if (events.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(stringResource(com.smsguard.R.string.history_empty), fontSize = 20.sp, color = Color.Gray)
+            Text(stringResource(com.smsguard.R.string.history_empty), fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     } else {
         LazyColumn(
@@ -66,10 +65,15 @@ fun HistoryItem(
     val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
     val date = sdf.format(Date(event.timestamp))
 
-    val riskColor = when (event.riskLevel) {
-        RiskLevel.HIGH -> Color(0xFFC62828)
-        RiskLevel.MEDIUM -> Color(0xFFF57C00)
-        RiskLevel.LOW -> Color(0xFF2E7D32)
+    val badgeColor = when (event.riskLevel) {
+        RiskLevel.HIGH -> MaterialTheme.colorScheme.errorContainer
+        RiskLevel.MEDIUM -> MaterialTheme.colorScheme.tertiaryContainer
+        RiskLevel.LOW -> MaterialTheme.colorScheme.primaryContainer
+    }
+    val badgeContentColor = when (event.riskLevel) {
+        RiskLevel.HIGH -> MaterialTheme.colorScheme.onErrorContainer
+        RiskLevel.MEDIUM -> MaterialTheme.colorScheme.onTertiaryContainer
+        RiskLevel.LOW -> MaterialTheme.colorScheme.onPrimaryContainer
     }
 
     val riskLabel =
@@ -93,10 +97,10 @@ fun HistoryItem(
                 Text(text = event.sender, fontWeight = FontWeight.Bold, fontSize = 20.sp)
                 Box(
                     modifier = Modifier
-                        .background(riskColor, shape = MaterialTheme.shapes.small)
+                        .background(badgeColor, shape = MaterialTheme.shapes.small)
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
-                    Text(text = riskLabel, color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(text = riskLabel, color = badgeContentColor, fontWeight = FontWeight.Bold)
                 }
             }
             
@@ -136,7 +140,7 @@ fun HistoryItem(
                     Text(text = stringResource(com.smsguard.R.string.history_domain, domain), fontSize = 18.sp)
                 }
             }
-            Text(text = date, fontSize = 14.sp, color = Color.Gray)
+            Text(text = date, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

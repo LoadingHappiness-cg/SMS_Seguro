@@ -50,7 +50,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
@@ -420,7 +419,7 @@ private fun ProtectionOverviewCard(
         }
     val iconTint =
         if (ready) {
-            Color(0xFF2E7D32)
+            MaterialTheme.colorScheme.primary
         } else {
             MaterialTheme.colorScheme.tertiary
         }
@@ -437,7 +436,7 @@ private fun ProtectionOverviewCard(
         ) {
             Surface(
                 shape = CircleShape,
-                color = if (ready) Color(0x332E7D32) else MaterialTheme.colorScheme.tertiaryContainer,
+                color = if (ready) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.tertiaryContainer,
             ) {
                 Icon(
                     imageVector = if (ready) Icons.Outlined.Verified else Icons.Outlined.ErrorOutline,
@@ -607,7 +606,7 @@ private fun ProtectionStatusRow(
             Icon(
                 imageVector = if (ok) Icons.Outlined.Verified else Icons.Outlined.ErrorOutline,
                 contentDescription = null,
-                tint = if (ok) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
+                tint = if (ok) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
             )
             Text(
                 text = if (ok) okText else missingText,

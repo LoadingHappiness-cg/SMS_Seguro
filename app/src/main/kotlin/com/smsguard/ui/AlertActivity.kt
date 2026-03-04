@@ -5,32 +5,41 @@ import android.os.Bundle
 import androidx.annotation.StringRes
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.smsguard.R
 import com.smsguard.core.AlertType
 import com.smsguard.core.RiskLevel
@@ -274,6 +283,7 @@ class AlertActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MultibancoAlertScreen(
     sender: String,
@@ -285,109 +295,236 @@ private fun MultibancoAlertScreen(
     onClose: () -> Unit,
     onHelp: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFE65100))
-            .padding(24.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = stringResource(R.string.mb_payment_title),
-            color = Color.White,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Black,
-            textAlign = TextAlign.Center,
-        )
+    var reasonsExpanded by rememberSaveable { mutableStateOf(false) }
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.9f)),
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.surface,
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text(stringResource(R.string.mb_payment_title)) },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
+            )
+        },
+        bottomBar = {
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 2.dp,
             ) {
-                if (mbEntidade.isNotBlank()) {
-                    Text(
-                        text = "${stringResource(R.string.mb_entity)}: $mbEntidade",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFB71C1C),
-                    )
-                }
-                if (mbReferencia.isNotBlank()) {
-                    Text(
-                        text = "${stringResource(R.string.mb_reference)}: $mbReferencia",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFB71C1C),
-                    )
-                }
-                if (!mbValor.isNullOrBlank()) {
-                    Text(
-                        text = "${stringResource(R.string.mb_amount)}: $mbValor€",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFB71C1C),
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "${stringResource(R.string.alert_sender)}: $sender",
-                    fontSize = 16.sp,
-                    color = Color.DarkGray,
-                )
-                Text(
-                    text = "${stringResource(R.string.alert_score)}: $score",
-                    fontSize = 16.sp,
-                    color = Color.DarkGray,
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = stringResource(R.string.alert_reasons),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = Color.Black,
-                )
-                reasons.forEach { reason ->
-                    Text(
-                        text = "\u2022 ${reasonLabel(reason)}",
-                        fontSize = 18.sp,
-                        color = Color.DarkGray,
-                    )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Button(
+                        onClick = onHelp,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.large,
+                    ) {
+                        Text(stringResource(R.string.ask_help))
+                    }
+                    TextButton(
+                        onClick = onClose,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.large,
+                    ) {
+                        Text(stringResource(R.string.alert_close))
+                    }
                 }
             }
-        }
-
-        Spacer(modifier = Modifier.height(40.dp))
-
-        Button(
-            onClick = onHelp,
+        },
+    ) { innerPadding ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black),
+                .padding(innerPadding)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp)
+                .padding(top = 24.dp, bottom = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(stringResource(R.string.ask_help), fontSize = 20.sp, fontWeight = FontWeight.Black)
-        }
+            // Risk status card
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                tonalElevation = 1.dp,
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.WarningAmber,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            shape = MaterialTheme.shapes.small,
+                        ) {
+                            Text(
+                                text = stringResource(R.string.risk_label_high),
+                                style = MaterialTheme.typography.labelLarge,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            )
+                        }
+                        val warningMessage =
+                            stringResource(R.string.mb_warning_line1) + " " +
+                                stringResource(R.string.mb_warning_line2) + "\n" +
+                                stringResource(R.string.mb_warning_line3)
+                        Text(
+                            text = warningMessage,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            // Payment details card
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                tonalElevation = 1.dp,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    if (mbEntidade.isNotBlank()) {
+                        MbDetailRow(
+                            label = stringResource(R.string.mb_entity),
+                            value = mbEntidade,
+                            emphasize = true,
+                        )
+                    }
+                    if (mbReferencia.isNotBlank()) {
+                        MbDetailRow(
+                            label = stringResource(R.string.mb_reference),
+                            value = mbReferencia,
+                            emphasize = true,
+                        )
+                    }
+                    if (!mbValor.isNullOrBlank()) {
+                        MbDetailRow(
+                            label = stringResource(R.string.mb_amount),
+                            value = "$mbValor€",
+                            emphasize = true,
+                        )
+                    }
+                    MbDetailRow(label = stringResource(R.string.alert_sender), value = sender)
+                    MbDetailRow(label = stringResource(R.string.alert_score), value = score.toString())
+                }
+            }
 
-        TextButton(onClick = onClose) {
-            Text(
-                text = stringResource(R.string.alert_close),
-                color = Color.White,
-                style = MaterialTheme.typography.labelLarge,
-            )
+            // Reasons card (expandable)
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                tonalElevation = 1.dp,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.alert_reasons),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.weight(1f),
+                        )
+                        TextButton(onClick = { reasonsExpanded = !reasonsExpanded }) {
+                            Text(
+                                stringResource(
+                                    if (reasonsExpanded) R.string.button_hide else R.string.button_show,
+                                ),
+                            )
+                        }
+                    }
+                    AnimatedVisibility(visible = reasonsExpanded) {
+                        Column(
+                            modifier = Modifier.padding(top = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            if (reasons.isEmpty()) {
+                                Text(
+                                    text = stringResource(R.string.analysis_no_details),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            } else {
+                                reasons.forEach { reason ->
+                                    MbReasonBullet(text = reasonLabel(reason))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
+    }
+}
+
+@Composable
+private fun MbDetailRow(
+    label: String,
+    value: String,
+    emphasize: Boolean = false,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.widthIn(min = 80.dp),
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (emphasize) FontWeight.SemiBold else null,
+            color = if (emphasize) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun MbReasonBullet(text: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Text(
+            text = "\u2022",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
