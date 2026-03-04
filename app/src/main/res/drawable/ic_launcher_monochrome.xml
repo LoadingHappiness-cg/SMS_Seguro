@@ -4,24 +4,25 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Same artwork as foreground, single colour for Android 13+ themed icons -->
+    <!--
+        Monochrome layer for Android 13+ themed icons.
+        Only the alpha channel matters: opaque (#000000) = themed colour,
+        transparent (#00000000) = background. We use fillType="evenOdd"
+        to cut the chat-bubble shape out of the shield.
+    -->
     <group
         android:translateX="15.12"
         android:translateY="15.12"
         android:scaleX="0.72"
         android:scaleY="0.72">
 
-        <!-- Shield outline -->
+        <!-- Shield with chat-bubble cutout (evenOdd subtracts inner path) -->
         <path
             android:fillColor="#000000"
-            android:pathData="M54,8 L86,20 V50 C86,73 72,90 54,100 C36,90 22,73 22,50 V20 Z" />
+            android:fillType="evenOdd"
+            android:pathData="M54,8 L86,20 V50 C86,73 72,90 54,100 C36,90 22,73 22,50 V20 Z M36,30 H72 Q82,30 82,40 V58 Q82,68 72,68 H50 L42,76 V68 H36 Q26,68 26,58 V40 Q26,30 36,30 Z" />
 
-        <!-- Chat bubble (cut-out effect via lighter fill) -->
-        <path
-            android:fillColor="#FFFFFF"
-            android:pathData="M36,30 H72 Q82,30 82,40 V58 Q82,68 72,68 H50 L42,76 V68 H36 Q26,68 26,58 V40 Q26,30 36,30 Z" />
-
-        <!-- Check mark -->
+        <!-- Check mark (opaque, visible inside the transparent bubble cutout) -->
         <path
             android:fillColor="@android:color/transparent"
             android:pathData="M44,50 L52,58 L66,44"
