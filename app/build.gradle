@@ -32,12 +32,12 @@ kotlin {
 
 android {
     namespace 'com.smsguard'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId "com.smsguard"
         minSdk 28
-        targetSdk 34
+        targetSdk 35
         versionCode 1
         versionName "0.1.1-alpha"
 
@@ -64,6 +64,7 @@ android {
     buildTypes {
         release {
             minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             if (hasReleaseSigningConfig) {
                 signingConfig signingConfigs.release

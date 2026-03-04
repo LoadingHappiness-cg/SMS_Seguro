@@ -69,8 +69,7 @@ All source lives in `app/src/main/kotlin/com/smsguard/` split into these package
 
 | File | Responsibility |
 |---|---|
-| `SmsBroadcastReceiver.kt` | `RECEIVE_SMS` broadcast (priority 999); calls `SmsEventProcessor` |
-| `SmsNotificationListener.kt` | `NotificationListenerService`; secondary interception path for devices where broadcast is suppressed |
+| `SmsNotificationListener.kt` | `NotificationListenerService`; primary SMS interception path via notification access |
 | `SmsEventProcessor.kt` | Central pipeline: normalize → detect Multibanco → extract URLs → score → deduplicate → persist → notify |
 | `AlertNotifier.kt` | Posts the user-visible high-priority alert notification |
 | `AlertNotifierChannels.kt` | Notification channel IDs and setup |
@@ -169,7 +168,6 @@ Tests use `RuleSet(...)` constructed directly with known weights — no file I/O
 ```
 INTERNET
 RECEIVE_BOOT_COMPLETED
-RECEIVE_SMS
 POST_NOTIFICATIONS
 REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
 USE_FULL_SCREEN_INTENT
