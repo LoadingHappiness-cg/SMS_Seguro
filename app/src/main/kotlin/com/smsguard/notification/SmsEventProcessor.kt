@@ -45,7 +45,7 @@ object SmsEventProcessor {
         val mbData = MultibancoDetector.detect(normalizedText)
         val urls = UrlExtractor.extractUrls(text)
 
-        if (OtpDetector.isSafeOtp(normalizedText, urls)) {
+        if (mbData == null && OtpDetector.isSafeOtp(normalizedText, urls)) {
             AppLogger.d("ProbeA otp_safe_skip source=$source package=${packageName.orEmpty()}")
             return false
         }
