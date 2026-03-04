@@ -6,6 +6,7 @@ import com.smsguard.core.AppLogger
 import com.smsguard.core.AlertType
 import com.smsguard.core.HistoryEvent
 import com.smsguard.core.MultibancoDetector
+import com.smsguard.core.OtpDetector
 import com.smsguard.core.RiskAssessment
 import com.smsguard.core.RiskEngine
 import com.smsguard.core.RiskLevel
@@ -43,6 +44,11 @@ object SmsEventProcessor {
 
         val mbData = MultibancoDetector.detect(normalizedText)
         val urls = UrlExtractor.extractUrls(text)
+
+        if (OtpDetector.isSafeOtp(normalizedText, urls)) {
+            AppLogger.d("ProbeA otp_safe_skip source=$source package=${packageName.orEmpty()}")
+            return false
+        }
 
         val riskEngine = ensureRiskEngine(context)
         val result =
