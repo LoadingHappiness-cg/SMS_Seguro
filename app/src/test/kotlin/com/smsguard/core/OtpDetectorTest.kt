@@ -43,4 +43,14 @@ class OtpDetectorTest {
         val text = TextNormalizer.normalize("O seu saldo e de 246747 euros")
         assertFalse(OtpDetector.isSafeOtp(text, emptyList()))
     }
+
+    // Regression: a Multibanco entity code (5 digits) satisfies the OTP regex and
+    // "confirme" is an OTP keyword — so isSafeOtp alone would return true for a
+    // Multibanco phishing message. The guard `mbData == null` in SmsEventProcessor
+    // is what keeps these in the risk pipeline.
+    @Test
+    fun multibancoEntityCodeLooksLikeOtp_isSafeOtpReturnsTrue() {
+        val text = TextNormalizer.normalize("confirme entidade 12345 referencia 123456789")
+        assertTrue(OtpDetector.isSafeOtp(text, emptyList()))
+    }
 }
