@@ -16,11 +16,6 @@ def releaseStorePassword = releaseSigningProp('SMS_SEGURO_RELEASE_STORE_PASSWORD
 def releaseKeyAlias = releaseSigningProp('SMS_SEGURO_RELEASE_KEY_ALIAS')
 def releaseKeyPassword = releaseSigningProp('SMS_SEGURO_RELEASE_KEY_PASSWORD')
 
-def hasReleaseSigningConfig =
-    [releaseStoreFilePath, releaseStorePassword, releaseKeyAlias, releaseKeyPassword].every { value ->
-        value != null && !value.trim().isEmpty()
-    }
-
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
@@ -30,6 +25,11 @@ java {
 kotlin {
     jvmToolchain(17)
 }
+
+def hasReleaseSigningConfig =
+    [releaseStoreFilePath, releaseStorePassword, releaseKeyAlias, releaseKeyPassword].every { value ->
+        value != null && !value.trim().isEmpty()
+    }
 
 android {
     namespace 'com.smsguard'
