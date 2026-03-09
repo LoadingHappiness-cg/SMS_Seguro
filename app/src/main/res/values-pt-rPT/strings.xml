@@ -167,6 +167,10 @@ Recebi uma mensagem com um link e o SMS Seguro diz que parece perigoso e recomen
     <string name="protection_activation_title">Ativar proteção automática</string>
     <string name="protection_activation_heading">Vamos ativar a proteção automática.</string>
     <string name="protection_activation_body">Para te proteger contra burlas por SMS,\na app precisa de acesso às notificações.\n\nNada sai do telemóvel.\nTudo fica seguro aqui.</string>
+    <string name="notification_listener_disclosure_data">• Lemos o remetente e o texto visível das notificações SMS.</string>
+    <string name="notification_listener_disclosure_purpose">• Este acesso é usado apenas para detetar sinais de burla e avisar a tempo.</string>
+    <string name="notification_listener_disclosure_local_processing">• A análise acontece no teu telemóvel, sem processamento em servidores.</string>
+    <string name="notification_listener_disclosure_no_server">• O conteúdo das mensagens não sai do dispositivo.</string>
     <string name="protection_activation_steps_title">Como fazer (4 passos)</string>
     <string name="protection_activation_step_1">Toque no botão verde.</string>
     <string name="protection_activation_step_2">Procure “SMS Seguro”.</string>

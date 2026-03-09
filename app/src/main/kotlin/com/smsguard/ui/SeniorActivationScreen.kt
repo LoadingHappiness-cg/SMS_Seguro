@@ -139,6 +139,22 @@ fun SeniorActivationScreen(
                     modifier =
                         Modifier
                             .fillMaxWidth()
+                            .padding(top = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    notificationListenerDisclosureResIds().forEach { disclosureResId ->
+                        Text(
+                            text = stringResource(disclosureResId),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+                }
+
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
                             .padding(top = 28.dp),
                     verticalArrangement = Arrangement.spacedBy(18.dp),
                 ) {
@@ -282,6 +298,14 @@ internal fun seniorActivationStepResIds(includeXiaomiNote: Boolean): List<Int> =
             add(R.string.protection_activation_step_xiaomi)
         }
     }
+
+internal fun notificationListenerDisclosureResIds(): List<Int> =
+    listOf(
+        R.string.notification_listener_disclosure_data,
+        R.string.notification_listener_disclosure_purpose,
+        R.string.notification_listener_disclosure_local_processing,
+        R.string.notification_listener_disclosure_no_server,
+    )
 
 internal fun Context.openNotificationListenerSettingsWithPrompt() {
     getSharedPreferences(ACTIVATION_PROMPT_PREFS, Context.MODE_PRIVATE)
