@@ -124,9 +124,36 @@ https://loadinghappiness-cg.github.io/SMS_Seguro/
 
 ### APK (versão de testes)
 
-`app/build/outputs/apk/debug/sms-seguro-0.1.1-alpha.apk`
+`app/build/outputs/apk/debug/sms-seguro-1.0.0.apk`
 
 Instalar manualmente no Android.
+
+## Release build
+
+To generate the Play Store bundle:
+
+1. Configure signing credentials in:
+
+`~/.gradle/gradle.properties`
+
+Example:
+
+```properties
+RELEASE_STORE_FILE=/path/to/upload-keystore.jks
+RELEASE_STORE_PASSWORD=*****
+RELEASE_KEY_ALIAS=*****
+RELEASE_KEY_PASSWORD=*****
+```
+
+2. Build the release bundle:
+
+```bash
+./gradlew bundleRelease
+```
+
+Output location:
+
+`app/build/outputs/bundle/release/app-release.aab`
 
 ---
 
