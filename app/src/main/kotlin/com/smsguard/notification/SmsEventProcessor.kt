@@ -11,6 +11,7 @@ import com.smsguard.core.RiskAssessment
 import com.smsguard.core.RiskEngine
 import com.smsguard.core.RiskLevel
 import com.smsguard.core.TextNormalizer
+import com.smsguard.core.TrustedAuthFlowDetector
 import com.smsguard.core.UrlExtractor
 import com.smsguard.rules.RuleLoader
 import com.smsguard.storage.HistoryStore
@@ -47,6 +48,10 @@ object SmsEventProcessor {
 
         if (mbData == null && OtpDetector.isSafeOtp(normalizedText, urls)) {
             AppLogger.d("ProbeA otp_safe_skip source=$source package=${packageName.orEmpty()}")
+            return false
+        }
+        if (mbData == null && TrustedAuthFlowDetector.isTrustedAuthFlow(normalizedText, urls)) {
+            AppLogger.d("ProbeA trusted_auth_skip source=$source package=${packageName.orEmpty()}")
             return false
         }
 
