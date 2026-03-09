@@ -152,10 +152,6 @@ object AlertNotifier {
                 .setAutoCancel(true)
                 .setOnlyAlertOnce(false)
 
-        if (assessment.alertType == AlertType.MULTIBANCO || assessment.level == RiskLevel.HIGH) {
-            builder.setFullScreenIntent(pendingIntent, true)
-        }
-
         val notification = builder.build()
 
         return runCatching {
