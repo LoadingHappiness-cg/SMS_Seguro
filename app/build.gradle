@@ -2,7 +2,6 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'org.jetbrains.kotlin.plugin.serialization'
-    id 'com.google.gms.google-services'
 }
 
 def releaseSigningProp = { String key ->
@@ -39,8 +38,8 @@ android {
         applicationId "com.smsguard"
         minSdk 28
         targetSdk 35
-        versionCode 2
-        versionName "0.1.2-alpha"
+        versionCode 3
+        versionName "0.1.3-alpha"
 
         buildConfigField "String", "RULESET_JSON_URL", "\"https://raw.githubusercontent.com/LoadingHappiness-cg/SMS_Seguro/main/rules/ruleset-latest.json\""
         buildConfigField "String", "RULESET_SIG_URL", "\"https://raw.githubusercontent.com/LoadingHappiness-cg/SMS_Seguro/main/rules/ruleset-latest.sig\""
@@ -137,9 +136,6 @@ dependencies {
     
     // Icons
     implementation "androidx.compose.material:material-icons-extended"
-
-    // Crash reporting
-    implementation "com.google.firebase:firebase-crashlytics-ktx:19.0.3"
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
