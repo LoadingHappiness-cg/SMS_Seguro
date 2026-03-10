@@ -2,22 +2,19 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'org.jetbrains.kotlin.plugin.serialization'
+    id 'com.google.gms.google-services'
 }
-
-def isSignedReleaseTaskRequested =
-    gradle.startParameter.taskNames.any { taskName ->
-        def lowerTaskName = taskName.toLowerCase()
-        lowerTaskName.contains('release') && !lowerTaskName.contains('unsigned') && !lowerTaskName.contains('debug')
-    }
 
 def releaseSigningProp = { String key ->
-    return providers.gradleProperty(key).orNull
+    return providers.gradleProperty(key)
+        .orElse(providers.environmentVariable(key))
+        .orNull
 }
 
-def releaseStoreFilePath = releaseSigningProp('RELEASE_STORE_FILE')
-def releaseStorePassword = releaseSigningProp('RELEASE_STORE_PASSWORD')
-def releaseKeyAlias = releaseSigningProp('RELEASE_KEY_ALIAS')
-def releaseKeyPassword = releaseSigningProp('RELEASE_KEY_PASSWORD')
+def releaseStoreFilePath = releaseSigningProp('SMS_SEGURO_RELEASE_STORE_FILE')
+def releaseStorePassword = releaseSigningProp('SMS_SEGURO_RELEASE_STORE_PASSWORD')
+def releaseKeyAlias = releaseSigningProp('SMS_SEGURO_RELEASE_KEY_ALIAS')
+def releaseKeyPassword = releaseSigningProp('SMS_SEGURO_RELEASE_KEY_PASSWORD')
 
 java {
     toolchain {
@@ -34,10 +31,6 @@ def hasReleaseSigningConfig =
         value != null && !value.trim().isEmpty()
     }
 
-def releaseSigningErrorMessage =
-    "Missing release signing configuration. Please define RELEASE_STORE_FILE, " +
-        "RELEASE_STORE_PASSWORD, RELEASE_KEY_ALIAS, and RELEASE_KEY_PASSWORD in ~/.gradle/gradle.properties"
-
 android {
     namespace 'com.smsguard'
     compileSdk 35
@@ -46,8 +39,8 @@ android {
         applicationId "com.smsguard"
         minSdk 28
         targetSdk 35
-        versionCode 1
-        versionName "1.0.0"
+        versionCode 2
+        versionName "0.1.2-alpha"
 
         buildConfigField "String", "RULESET_JSON_URL", "\"https://raw.githubusercontent.com/LoadingHappiness-cg/SMS_Seguro/main/rules/ruleset-latest.json\""
         buildConfigField "String", "RULESET_SIG_URL", "\"https://raw.githubusercontent.com/LoadingHappiness-cg/SMS_Seguro/main/rules/ruleset-latest.sig\""
@@ -59,14 +52,12 @@ android {
     }
 
     signingConfigs {
-        release {
-            if (hasReleaseSigningConfig) {
+        if (hasReleaseSigningConfig) {
+            release {
                 storeFile file(releaseStoreFilePath)
                 storePassword releaseStorePassword
                 keyAlias releaseKeyAlias
                 keyPassword releaseKeyPassword
-            } else if (isSignedReleaseTaskRequested) {
-                throw new GradleException(releaseSigningErrorMessage)
             }
         }
     }
@@ -120,7 +111,11 @@ android {
 tasks.configureEach { task ->
     if ((task.name == 'assembleRelease' || task.name == 'bundleRelease') && !hasReleaseSigningConfig) {
         task.doFirst {
-            throw new GradleException(releaseSigningErrorMessage)
+            throw new GradleException(
+                "Release signing credentials are missing. Define SMS_SEGURO_RELEASE_STORE_FILE, " +
+                    "SMS_SEGURO_RELEASE_STORE_PASSWORD, SMS_SEGURO_RELEASE_KEY_ALIAS, and " +
+                    "SMS_SEGURO_RELEASE_KEY_PASSWORD in ~/.gradle/gradle.properties or environment variables."
+            )
         }
     }
 }
@@ -142,6 +137,9 @@ dependencies {
     
     // Icons
     implementation "androidx.compose.material:material-icons-extended"
+
+    // Crash reporting
+    implementation "com.google.firebase:firebase-crashlytics-ktx:19.0.3"
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

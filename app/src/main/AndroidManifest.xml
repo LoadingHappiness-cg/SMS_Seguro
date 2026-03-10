@@ -65,7 +65,7 @@
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="persistent_sms_scam_protection" />
+                android:value="Persistent user-visible SMS fraud protection that keeps notification monitoring active and requests notification-listener rebind when needed so suspicious messages can be analyzed and alerted in real time." />
         </service>
 
         <receiver
