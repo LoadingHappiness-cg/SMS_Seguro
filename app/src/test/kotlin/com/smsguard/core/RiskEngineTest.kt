@@ -266,4 +266,76 @@ class RiskEngineTest {
         assertTrue(result.level == RiskLevel.MEDIUM || result.level == RiskLevel.HIGH)
         assertTrue(result.reasons.contains("mb_payment_request"))
     }
+
+    @Test
+    fun malformedRegexAny_doesNotThrowAndSkipsInvalidPattern() {
+        val engine = RiskEngine(ruleSetWithRegexRule(listOf("[")))
+
+        val result =
+            engine.analyze(
+                messageText = "Tentativa de saque: código 038493. Não foi você? Ligue +351300305255",
+                sender = "CGD",
+                urls = emptyList(),
+                multibancoData = null,
+            )
+
+        assertFalse(result.reasons.contains("bank_withdrawal_callback_scam"))
+        assertTrue(result.level == RiskLevel.MEDIUM || result.level == RiskLevel.HIGH)
+    }
+
+    @Test
+    fun invalidAndValidRegexAny_validPatternStillTriggersRule() {
+        val engine = RiskEngine(ruleSetWithRegexRule(listOf("[", """(?i)codigo\s*[0-9]{4,6}""")))
+
+        val result =
+            engine.analyze(
+                messageText = "Tentativa de saque: código 038493. Não foi você? Ligue +351300305255",
+                sender = "CGD",
+                urls = emptyList(),
+                multibancoData = null,
+            )
+
+        assertEquals(RiskLevel.HIGH, result.level)
+        assertTrue(result.reasons.contains("bank_withdrawal_callback_scam"))
+    }
+
+    @Test
+    fun allMalformedRegexAny_ruleDoesNotMatch() {
+        val engine = RiskEngine(ruleSetWithRegexRule(listOf("[", "(")))
+
+        val result =
+            engine.analyze(
+                messageText = "Tentativa de saque: código 038493. Não foi você? Ligue +351300305255",
+                sender = "CGD",
+                urls = emptyList(),
+                multibancoData = null,
+            )
+
+        assertFalse(result.reasons.contains("bank_withdrawal_callback_scam"))
+        assertTrue(result.level == RiskLevel.MEDIUM || result.level == RiskLevel.HIGH)
+    }
+
+    private fun ruleSetWithRegexRule(regexAny: List<String>): RuleSet =
+        ruleSet.copy(
+            messageRules =
+                listOf(
+                    MessageRule(
+                        id = "bank_withdrawal_callback_scam",
+                        description = "Possível fraude bancária: tentativa de saque + código + pedido para ligar",
+                        category = "banking_scam",
+                        severity = "high",
+                        score = 70,
+                        allOfContains = listOf("tentativa de saque", "ligue"),
+                        regexAny = regexAny,
+                        brandAnyContains = listOf("cgd", "caixa geral", "bpi"),
+                        brandBonusScore = 10,
+                        brandBonusReason = "Pode estar a imitar uma entidade bancária",
+                        reasons =
+                            listOf(
+                                "Mensagem com padrão típico de fraude bancária",
+                                "Inclui código numérico e pedido para ligar",
+                            ),
+                    ),
+                ),
+        )
 }
