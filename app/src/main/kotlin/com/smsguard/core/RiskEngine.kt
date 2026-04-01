@@ -216,7 +216,9 @@ class RiskEngine(private val ruleSet: RuleSet) {
         if (rule.regexAny.isNotEmpty()) {
             val anyRegexMatches =
                 rule.regexAny.any { pattern ->
-                    Regex(pattern).containsMatchIn(normalizedText)
+                    runCatching {
+                        Regex(pattern).containsMatchIn(normalizedText)
+                    }.getOrElse { false }
                 }
             if (!anyRegexMatches) return false
         }
