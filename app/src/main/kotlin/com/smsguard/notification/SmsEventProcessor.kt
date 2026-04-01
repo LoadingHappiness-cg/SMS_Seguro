@@ -60,6 +60,7 @@ object SmsEventProcessor {
             riskEngine.analyze(
                 messageText = text,
                 normalizedText = normalizedText,
+                sender = sender,
                 urls = urls,
                 multibancoData = mbData,
             )

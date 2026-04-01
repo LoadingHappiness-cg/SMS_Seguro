@@ -64,8 +64,12 @@
     <string name="setup_rules_status_running">Em curso</string>
     <string name="setup_rules_status_unknown">Por verificar</string>
     <string name="setup_ruleset_info_title">Proteção (regras)</string>
+    <string name="setup_ruleset_version_label">Versão</string>
     <string name="setup_ruleset_version">Versão: %1$d</string>
-    <string name="setup_ruleset_last_update">Última atualização: %1$s</string>
+    <string name="setup_ruleset_published_at">Publicado em</string>
+    <string name="setup_ruleset_last_check">Última verificação</string>
+    <string name="setup_ruleset_status">Estado</string>
+    <string name="setup_ruleset_result">Resultado</string>
     <string name="setup_check_updates_now">Procurar atualizações agora</string>
     <string name="setup_privacy_promise">Esta aplicação analisa notificações de SMS localmente e nunca envia o conteúdo das mensagens para a internet.</string>
     <string name="enable_notifications">Ativar acesso às notificações</string>

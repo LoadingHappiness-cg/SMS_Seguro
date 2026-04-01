@@ -25,16 +25,34 @@ class RiskEngine(private val ruleSet: RuleSet) {
     fun analyze(
         messageText: String,
         normalizedText: String = TextNormalizer.normalize(messageText),
+        sender: String? = null,
         urls: List<String>,
         multibancoData: MultibancoData?,
     ): RiskResult {
         var score = 0
         val reasons = linkedSetOf<String>()
+        val normalizedSender = sender?.let { TextNormalizer.normalize(it) }.orEmpty()
 
         val matchedGroups = detectKeywordGroups(normalizedText)
         matchedGroups.forEach { group ->
             score += keywordGroupWeights[group] ?: 0
             reasons.add("keyword_$group")
+        }
+
+        ruleSet.messageRules.forEach { rule ->
+            if (!ruleMatches(rule, normalizedText)) return@forEach
+
+            score += rule.score
+            reasons.add(rule.id)
+            rule.reasons.filter { it.isNotBlank() }.forEach(reasons::add)
+
+            if (rule.brandAnyContains.isNotEmpty() &&
+                rule.brandBonusScore != 0 &&
+                containsAny(normalizedText, normalizedSender, rule.brandAnyContains)
+            ) {
+                score += rule.brandBonusScore
+                reasons.add(rule.brandBonusReason.ifBlank { "Pode estar a imitar uma entidade bancária" })
+            }
         }
 
         val urlHosts = urls.map { UrlExtractor.getDomain(it).lowercase() }.filter { it.isNotBlank() }
@@ -188,6 +206,35 @@ class RiskEngine(private val ruleSet: RuleSet) {
             primaryDomain = primaryDomain,
             primaryBrand = primaryBrand,
         )
+    }
+
+    private fun ruleMatches(rule: MessageRule, normalizedText: String): Boolean {
+        if (rule.allOfContains.any { token -> !normalizedText.contains(TextNormalizer.normalize(token)) }) {
+            return false
+        }
+
+        if (rule.regexAny.isNotEmpty()) {
+            val anyRegexMatches =
+                rule.regexAny.any { pattern ->
+                    Regex(pattern).containsMatchIn(normalizedText)
+                }
+            if (!anyRegexMatches) return false
+        }
+
+        return true
+    }
+
+    private fun containsAny(
+        normalizedText: String,
+        normalizedSender: String,
+        tokens: List<String>,
+    ): Boolean {
+        if (tokens.isEmpty()) return false
+
+        return tokens.any { token ->
+            val normalizedToken = TextNormalizer.normalize(token)
+            normalizedText.contains(normalizedToken) || normalizedSender.contains(normalizedToken)
+        }
     }
 
     private fun detectKeywordGroups(normalizedMessage: String): Set<String> {
