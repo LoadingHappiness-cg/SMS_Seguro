@@ -1,6 +1,7 @@
 package com.smsguard.core
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -20,6 +21,40 @@ class RiskEngineTest {
                     publicServices = listOf("financas", "seguranca social", "sns"),
                     delivery = listOf("ctt", "dhl", "ups", "dpd", "entrega"),
                     banking = listOf("cgd", "bpi", "banco", "conta"),
+                ),
+            messageRules =
+                listOf(
+                    MessageRule(
+                        id = "bank_withdrawal_callback_scam",
+                        description = "Possível fraude bancária: tentativa de saque + código + pedido para ligar",
+                        category = "banking_scam",
+                        severity = "high",
+                        score = 70,
+                        allOfContains = listOf("tentativa de saque", "ligue"),
+                        regexAny =
+                            listOf(
+                                """(?i)codigo\s*[0-9]{4,6}""",
+                                """(?i)c[oó]digo\s*[0-9]{4,6}""",
+                                """(?i)\+351\s*[0-9]{9}""",
+                            ),
+                        brandAnyContains =
+                            listOf(
+                                "cgd",
+                                "caixa geral",
+                                "bpi",
+                                "santander",
+                                "millennium",
+                                "novo banco",
+                                "bankinter",
+                            ),
+                        brandBonusScore = 10,
+                        brandBonusReason = "Pode estar a imitar uma entidade bancária",
+                        reasons =
+                            listOf(
+                                "Mensagem com padrão típico de fraude bancária",
+                                "Inclui código numérico e pedido para ligar",
+                            ),
+                    ),
                 ),
             urlSignals =
                 UrlSignals(
@@ -85,6 +120,40 @@ class RiskEngineTest {
         assertEquals(RiskLevel.HIGH, result.level)
         assertTrue(result.reasons.contains("keyword_urgency"))
         assertTrue(result.reasons.contains("url_suspicious_tld"))
+    }
+
+    @Test
+    fun bankWithdrawalCallbackScam_isHighRisk() {
+        val engine = RiskEngine(ruleSet)
+
+        val result =
+            engine.analyze(
+                messageText = "Tentativa de saque: código 038493. Não foi você? Ligue +351300305255",
+                sender = "CGD",
+                urls = emptyList(),
+                multibancoData = null,
+            )
+
+        assertEquals(RiskLevel.HIGH, result.level)
+        assertTrue(result.reasons.contains("bank_withdrawal_callback_scam"))
+        assertTrue(result.reasons.contains("Mensagem com padrão típico de fraude bancária"))
+        assertTrue(result.reasons.contains("Inclui código numérico e pedido para ligar"))
+        assertTrue(result.reasons.contains("Pode estar a imitar uma entidade bancária"))
+    }
+
+    @Test
+    fun codeAndPhoneWithoutWithdrawalPhrase_doesNotMatchNewRule() {
+        val engine = RiskEngine(ruleSet)
+
+        val result =
+            engine.analyze(
+                messageText = "O seu código 038493. Não foi você? Ligue +351300305255",
+                sender = "Banco Seguro",
+                urls = emptyList(),
+                multibancoData = null,
+            )
+
+        assertFalse(result.reasons.contains("bank_withdrawal_callback_scam"))
     }
 
     @Test

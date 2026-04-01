@@ -29,11 +29,27 @@ data class RuleSet(
     val publishedAt: String,
     val scoring: ScoringConfig = ScoringConfig(),
     val keywordGroups: KeywordGroups = KeywordGroups(),
+    val messageRules: List<MessageRule> = emptyList(),
     val urlSignals: UrlSignals = UrlSignals(),
     val multibancoSignals: MultibancoSignals = MultibancoSignals(),
     val correlation: CorrelationConfig = CorrelationConfig(),
     val synergy: SynergyConfig = SynergyConfig(),
     val multibanco: MultibancoConfig = MultibancoConfig(),
+)
+
+@Serializable
+data class MessageRule(
+    val id: String,
+    val description: String,
+    val category: String,
+    val severity: String,
+    val score: Int,
+    val allOfContains: List<String> = emptyList(),
+    val regexAny: List<String> = emptyList(),
+    val brandAnyContains: List<String> = emptyList(),
+    val brandBonusScore: Int = 0,
+    val brandBonusReason: String = "",
+    val reasons: List<String> = emptyList(),
 )
 
 @Serializable
