@@ -1,6 +1,6 @@
 {
-  "version": 5,
-  "publishedAt": "2026-02-27T20:46:32Z",
+  "version": 6,
+  "publishedAt": "2026-04-01T11:51:30Z",
   "scoring": {
     "thresholds": {
       "medium": 40,
@@ -103,6 +103,39 @@
       "seguranca"
     ]
   },
+  "messageRules": [
+    {
+      "id": "bank_withdrawal_callback_scam",
+      "description": "Possível fraude bancária: tentativa de saque + código + pedido para ligar",
+      "category": "banking_scam",
+      "severity": "high",
+      "score": 70,
+      "allOfContains": [
+        "tentativa de saque",
+        "ligue"
+      ],
+      "regexAny": [
+        "(?i)codigo\\s*[0-9]{4,6}",
+        "(?i)c[oó]digo\\s*[0-9]{4,6}",
+        "(?i)\\+351\\s*[0-9]{9}"
+      ],
+      "brandAnyContains": [
+        "cgd",
+        "caixa geral",
+        "bpi",
+        "santander",
+        "millennium",
+        "novo banco",
+        "bankinter"
+      ],
+      "brandBonusScore": 10,
+      "brandBonusReason": "Pode estar a imitar uma entidade bancária",
+      "reasons": [
+        "Mensagem com padrão típico de fraude bancária",
+        "Inclui código numérico e pedido para ligar"
+      ]
+    }
+  ],
   "urlSignals": {
     "suspiciousTlds": [
       "xyz",
