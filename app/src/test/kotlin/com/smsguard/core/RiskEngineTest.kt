@@ -136,10 +136,11 @@ class RiskEngineTest {
             )
 
         assertEquals(RiskLevel.HIGH, result.level)
-        assertTrue(result.reasons.contains("bank_withdrawal_callback_scam"))
+        assertFalse(result.reasons.contains("bank_withdrawal_callback_scam"))
         assertTrue(result.reasons.contains("Mensagem com padrão típico de fraude bancária"))
         assertTrue(result.reasons.contains("Inclui código numérico e pedido para ligar"))
         assertTrue(result.reasons.contains("Pode estar a imitar uma entidade bancária"))
+        assertFalse(result.reasons.contains("keyword_dataRequest"))
     }
 
     @Test
@@ -155,7 +156,8 @@ class RiskEngineTest {
             )
 
         assertEquals(RiskLevel.HIGH, result.level)
-        assertTrue(result.reasons.contains("bank_withdrawal_callback_scam"))
+        assertFalse(result.reasons.contains("bank_withdrawal_callback_scam"))
+        assertTrue(result.reasons.contains("Mensagem com padrão típico de fraude bancária"))
     }
 
     @Test
@@ -170,7 +172,7 @@ class RiskEngineTest {
                 multibancoData = null,
             )
 
-        assertFalse(result.reasons.contains("bank_withdrawal_callback_scam"))
+        assertFalse(result.reasons.contains("Mensagem com padrão típico de fraude bancária"))
     }
 
     @Test
@@ -310,10 +312,11 @@ class RiskEngineTest {
                 sender = "CGD",
                 urls = emptyList(),
                 multibancoData = null,
-            )
+        )
 
         assertEquals(RiskLevel.HIGH, result.level)
-        assertTrue(result.reasons.contains("bank_withdrawal_callback_scam"))
+        assertFalse(result.reasons.contains("bank_withdrawal_callback_scam"))
+        assertTrue(result.reasons.contains("Mensagem com padrão típico de fraude bancária"))
     }
 
     @Test
@@ -341,7 +344,7 @@ class RiskEngineTest {
                         description = "Possível fraude bancária: tentativa de saque + código + pedido para ligar",
                         category = "banking_scam",
                         severity = "high",
-                        score = 70,
+                        score = 65,
                         allOfContains = listOf("tentativa de saque", "ligue"),
                         regexAny = regexAny,
                         brandAnyContains = listOf("cgd", "caixa geral", "bpi"),
