@@ -19,3 +19,5 @@ rules/private_key.pem
 
 # Local debug artifacts
 apk_snapshots/
+artifacts/
+*.aab

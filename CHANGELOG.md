@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 0.1.6
+- Banking callback scam detection fixed
+- OtpDetector false-safe behavior corrected
+- History clear added
+- OTA ruleset metadata visible in UI
+- Regex hardening for OTA rules
+
 ## v0.1-alpha
 
 Primeira versão funcional do SMS Seguro, focada na deteção de burlas por SMS em Portugal.
