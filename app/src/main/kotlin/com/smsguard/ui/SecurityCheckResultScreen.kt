@@ -432,7 +432,15 @@ private fun ReasonBullet(text: String) {
 
 @Composable
 internal fun reasonLabel(code: String): String =
-    reasonLabelResId(code)?.let { stringResource(it) } ?: code
+    when (val resId = reasonLabelResId(code)) {
+        null ->
+            if (isTechnicalReasonCode(code)) {
+                stringResource(R.string.reason_generic_suspicious)
+            } else {
+                code
+            }
+        else -> stringResource(resId)
+    }
 
 @StringRes
 internal fun reasonLabelResId(code: String): Int? =
@@ -474,7 +482,18 @@ internal fun reasonLabelResId(code: String): Int? =
 internal fun reasonLabelText(
     code: String,
     resolve: (Int) -> String,
-): String = reasonLabelResId(code)?.let(resolve) ?: code
+    fallback: String,
+): String =
+    when (val resId = reasonLabelResId(code)) {
+        null ->
+            if (isTechnicalReasonCode(code)) fallback else code
+        else ->
+            resolve(resId)
+    }
+
+internal fun isTechnicalReasonCode(code: String): Boolean =
+    code.contains('_') ||
+        (code == code.lowercase() && !code.any(Char::isWhitespace) && code.any(Char::isLetter))
 
 @Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable

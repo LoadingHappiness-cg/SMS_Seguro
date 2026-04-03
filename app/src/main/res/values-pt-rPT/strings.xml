@@ -159,6 +159,7 @@
     <string name="alert_score">Pontuação</string>
     <string name="alert_close">Ignorar e fechar</string>
     <string name="ask_help">Pedir ajuda</string>
+    <string name="reason_generic_suspicious">Mensagem considerada suspeita pelas regras de segurança.</string>
     <string name="help_share_intro">Recebi um SMS suspeito.</string>
     <string name="help_share_request">Podes verificar se é seguro?</string>
     <string name="help_share_subject">Ajuda — SMS Seguro</string>

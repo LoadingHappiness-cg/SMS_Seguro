@@ -251,7 +251,14 @@ class AlertActivity : ComponentActivity() {
     ) {
         val displayReasons =
             summarizeHelpReasons(
-                reasons = reasons.map { reason -> reasonLabelText(reason) { getString(it) } },
+                reasons =
+                    reasons.map { reason ->
+                        reasonLabelText(
+                            reason,
+                            resolve = { getString(it) },
+                            fallback = getString(R.string.reason_generic_suspicious),
+                        )
+                    },
             )
 
         val message =
