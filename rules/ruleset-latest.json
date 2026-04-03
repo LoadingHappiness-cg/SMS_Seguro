@@ -109,15 +109,13 @@
       "description": "Possível fraude bancária: tentativa de saque + código + pedido para ligar",
       "category": "banking_scam",
       "severity": "high",
-      "score": 70,
+      "score": 65,
       "allOfContains": [
         "ligue"
       ],
       "regexAny": [
-        "(?i)tentativa.*saque.*codigo\\s*[0-9]{4,6}.*ligue.*(?:\\+?351|[0-9]{9})",
-        "(?i)tentativa.*levantamento.*nao reconhece.*ligue.*(?:\\+?351|[0-9]{9})",
-        "(?i)nao foi voce.*ligue.*(?:\\+?351|[0-9]{9})",
-        "(?i)nao reconhece.*ligue.*(?:\\+?351|[0-9]{9})"
+        "(?i)tentativa[^a-z0-9]*(?:de[^a-z0-9]*)?saque[^a-z0-9]*(?:codigo[^a-z0-9]*[0-9]{4,6}[^a-z0-9]*)?(?:nao[^a-z0-9]*foi[^a-z0-9]*voce|nao[^a-z0-9]*reconhece)[^a-z0-9]*ligue[^a-z0-9]*(?:\\+?351\\s*)?[0-9]{9}",
+        "(?i)tentativa[^a-z0-9]*(?:de[^a-z0-9]*)?levantamento[^a-z0-9]*(?:detetada|detectada)?[^a-z0-9]*(?:codigo[^a-z0-9]*[0-9]{4,6}[^a-z0-9]*)?(?:nao[^a-z0-9]*reconhece|nao[^a-z0-9]*foi[^a-z0-9]*voce)[^a-z0-9]*ligue[^a-z0-9]*(?:\\+?351\\s*)?[0-9]{9}"
       ],
       "brandAnyContains": [
         "cgd",

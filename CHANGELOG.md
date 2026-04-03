@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.1.7
+- Play Closed Test re-release after versionCode 6 was already consumed
+- No functional changes beyond the release version bump
+
 ## 0.1.6
 - Banking callback scam detection fixed
 - OtpDetector false-safe behavior corrected

@@ -33,17 +33,19 @@ class RiskEngine(private val ruleSet: RuleSet) {
         val reasons = linkedSetOf<String>()
         val normalizedSender = sender?.let { TextNormalizer.normalize(it) }.orEmpty()
 
+        val matchedMessageRules = ruleSet.messageRules.filter { ruleMatches(it, normalizedText) }
+        val suppressDataRequestStacking =
+            matchedMessageRules.any { rule -> rule.id == "bank_withdrawal_callback_scam" }
+
         val matchedGroups = detectKeywordGroups(normalizedText)
         matchedGroups.forEach { group ->
+            if (group == "dataRequest" && suppressDataRequestStacking) return@forEach
             score += keywordGroupWeights[group] ?: 0
             reasons.add("keyword_$group")
         }
 
-        ruleSet.messageRules.forEach { rule ->
-            if (!ruleMatches(rule, normalizedText)) return@forEach
-
+        matchedMessageRules.forEach { rule ->
             score += rule.score
-            reasons.add(rule.id)
             rule.reasons.filter { it.isNotBlank() }.forEach(reasons::add)
 
             if (rule.brandAnyContains.isNotEmpty() &&
@@ -181,7 +183,7 @@ class RiskEngine(private val ruleSet: RuleSet) {
             score = mediumThreshold
             reasons.add("mb_payment_request")
         }
-        if ("dataRequest" in matchedGroups && score < mediumThreshold) {
+        if ("dataRequest" in matchedGroups && !suppressDataRequestStacking && score < mediumThreshold) {
             score = mediumThreshold
             reasons.add("data_request_minimum_medium")
         }
