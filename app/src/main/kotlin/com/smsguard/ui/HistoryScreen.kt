@@ -24,10 +24,10 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
-fun HistoryScreen() {
+fun HistoryScreen(refreshNonce: Int = 0) {
     val context = LocalContext.current
     val historyStore = remember { HistoryStore(context) }
-    val events = remember { historyStore.getAllEvents() }
+    val events = remember(refreshNonce) { historyStore.getAllEvents() }
 
     if (events.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

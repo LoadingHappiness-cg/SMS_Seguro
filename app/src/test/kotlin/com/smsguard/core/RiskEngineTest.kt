@@ -30,12 +30,13 @@ class RiskEngineTest {
                         category = "banking_scam",
                         severity = "high",
                         score = 70,
-                        allOfContains = listOf("tentativa de saque", "ligue"),
+                        allOfContains = listOf("ligue"),
                         regexAny =
                             listOf(
-                                """(?i)codigo\s*[0-9]{4,6}""",
-                                """(?i)c[oó]digo\s*[0-9]{4,6}""",
-                                """(?i)\+351\s*[0-9]{9}""",
+                                """(?i)tentativa.*saque.*codigo\s*[0-9]{4,6}.*ligue.*(?:\+?351|[0-9]{9})""",
+                                """(?i)tentativa.*levantamento.*nao reconhece.*ligue.*(?:\+?351|[0-9]{9})""",
+                                """(?i)nao foi voce.*ligue.*(?:\+?351|[0-9]{9})""",
+                                """(?i)nao reconhece.*ligue.*(?:\+?351|[0-9]{9})""",
                             ),
                         brandAnyContains =
                             listOf(
@@ -142,13 +143,29 @@ class RiskEngineTest {
     }
 
     @Test
-    fun codeAndPhoneWithoutWithdrawalPhrase_doesNotMatchNewRule() {
+    fun bankWithdrawalCallbackVariant_isHighRisk() {
         val engine = RiskEngine(ruleSet)
 
         val result =
             engine.analyze(
-                messageText = "O seu código 038493. Não foi você? Ligue +351300305255",
-                sender = "Banco Seguro",
+                messageText = "Tentativa de levantamento detetada. Não reconhece? Ligue 300305255",
+                sender = "CGD",
+                urls = emptyList(),
+                multibancoData = null,
+            )
+
+        assertEquals(RiskLevel.HIGH, result.level)
+        assertTrue(result.reasons.contains("bank_withdrawal_callback_scam"))
+    }
+
+    @Test
+    fun unrelatedMessage_doesNotMatchBankCallbackRule() {
+        val engine = RiskEngine(ruleSet)
+
+        val result =
+            engine.analyze(
+                messageText = "Your package will arrive tomorrow",
+                sender = "Shipping",
                 urls = emptyList(),
                 multibancoData = null,
             )

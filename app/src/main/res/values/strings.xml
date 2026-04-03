@@ -71,6 +71,15 @@
     <string name="setup_ruleset_status">Estado</string>
     <string name="setup_ruleset_result">Resultado</string>
     <string name="setup_check_updates_now">Procurar atualizações agora</string>
+    <string name="clear_history_title">Histórico de análise</string>
+    <string name="clear_history_description">Remova os resultados guardados localmente. As suas mensagens SMS não serão apagadas.</string>
+    <string name="clear_history_action">Limpar histórico</string>
+    <string name="clear_history_confirm_title">Limpar histórico de análise?</string>
+    <string name="clear_history_confirm_body">Isto remove os resultados guardados pela app. As suas mensagens SMS não serão apagadas.</string>
+    <string name="clear_history_confirm_clear">Limpar</string>
+    <string name="clear_history_confirm_cancel">Cancelar</string>
+    <string name="clear_history_success">Histórico limpo com sucesso</string>
+    <string name="clear_history_failed">Não foi possível limpar o histórico.</string>
     <string name="setup_privacy_promise">Esta aplicação analisa notificações de SMS localmente e nunca envia o conteúdo das mensagens para a internet.</string>
     <string name="enable_notifications">Ativar acesso às notificações</string>
     <string name="rules_version">Versão</string>

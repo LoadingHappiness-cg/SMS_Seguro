@@ -53,4 +53,11 @@ class OtpDetectorTest {
         val text = TextNormalizer.normalize("confirme entidade 12345 referencia 123456789")
         assertTrue(OtpDetector.isSafeOtp(text, emptyList()))
     }
+
+    @Test
+    fun bankingCallbackScam_isNotSafeOtp() {
+        val text = TextNormalizer.normalize("Tentativa de saque: código 038493. Não foi você? Ligue +351300305255")
+
+        assertFalse(OtpDetector.isSafeOtp(text, emptyList()))
+    }
 }
