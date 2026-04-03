@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -48,6 +49,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,24 +72,33 @@ import com.smsguard.core.xiaomiSupportInfo
 import com.smsguard.notification.AlertNotifierChannels
 import com.smsguard.notification.ForegroundServiceNotifier
 import com.smsguard.rules.RuleLoader
+import com.smsguard.storage.HistoryStore
 import com.smsguard.update.RuleUpdateScheduler
 import com.smsguard.update.RuleUpdateWorker
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
-fun SetupScreen(repairRequestNonce: Int = 0) {
+fun SetupScreen(
+    repairRequestNonce: Int = 0,
+    onHistoryCleared: () -> Unit = {},
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val ruleLoader = remember { RuleLoader(context) }
+    val historyStore = remember { HistoryStore(context) }
     val prefs = remember { context.getSharedPreferences("ruleset_meta", Context.MODE_PRIVATE) }
     val workManager = remember { WorkManager.getInstance(context) }
+    val coroutineScope = rememberCoroutineScope()
     val xiaomiInfo = remember { context.xiaomiSupportInfo() }
     val currentRuleSet = remember { ruleLoader.loadCurrent() }
 
@@ -101,6 +112,7 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
     var showActivationPrompt by remember { mutableStateOf(false) }
     var showNotificationPermissionBlocker by remember { mutableStateOf(false) }
     var showForegroundRecoveryDialog by remember { mutableStateOf(false) }
+    var showClearHistoryDialog by remember { mutableStateOf(false) }
     var protectionRefreshNonce by remember { mutableIntStateOf(0) }
     var foregroundRecoveryAttempted by remember { mutableStateOf(false) }
     var foregroundRecoveryNonce by remember { mutableIntStateOf(0) }
@@ -146,6 +158,25 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
         statusMessageRes = R.string.checking_updates
         isChecking = true
         RuleUpdateScheduler.runCheckNow(context)
+    }
+
+    fun clearProcessedHistory() {
+        coroutineScope.launch {
+            val cleared =
+                withContext(Dispatchers.IO) {
+                    runCatching {
+                        historyStore.clearProcessedHistory()
+                    }.isSuccess
+                }
+
+            showClearHistoryDialog = false
+            if (cleared) {
+                onHistoryCleared()
+                Toast.makeText(context, context.getString(R.string.clear_history_success), Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, context.getString(R.string.clear_history_failed), Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     val requestNotificationsPermission =
@@ -350,6 +381,11 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
                 modifier = Modifier.padding(horizontal = 20.dp),
             )
 
+            HistoryMaintenanceCard(
+                onClearHistory = { showClearHistoryDialog = true },
+                modifier = Modifier.padding(horizontal = 20.dp),
+            )
+
             if (xiaomiInfo.shouldShowGuidance) {
                 XiaomiGuidanceCard(
                     xiaomiInfo = xiaomiInfo,
@@ -423,6 +459,24 @@ fun SetupScreen(repairRequestNonce: Int = 0) {
                     context.openForegroundChannelSettings()
                 },
                 onDismiss = { showForegroundRecoveryDialog = false },
+            )
+        }
+
+        if (showClearHistoryDialog) {
+            AlertDialog(
+                onDismissRequest = { showClearHistoryDialog = false },
+                title = { Text(text = stringResource(R.string.clear_history_confirm_title)) },
+                text = { Text(text = stringResource(R.string.clear_history_confirm_body)) },
+                confirmButton = {
+                    TextButton(onClick = { clearProcessedHistory() }) {
+                        Text(text = stringResource(R.string.clear_history_confirm_clear))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showClearHistoryDialog = false }) {
+                        Text(text = stringResource(R.string.clear_history_confirm_cancel))
+                    }
+                },
             )
         }
     }
@@ -635,6 +689,41 @@ private fun RulesetUpdateCard(
                             if (isChecking) R.string.checking_updates else R.string.setup_check_updates_now,
                         ),
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HistoryMaintenanceCard(
+    onClearHistory: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        shape = RoundedCornerShape(20.dp),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.clear_history_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = stringResource(R.string.clear_history_description),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            FilledTonalButton(
+                onClick = onClearHistory,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Text(text = stringResource(R.string.clear_history_action))
             }
         }
     }

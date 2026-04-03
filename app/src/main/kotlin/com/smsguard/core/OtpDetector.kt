@@ -20,6 +20,8 @@ object OtpDetector {
         "iban", "cartao", "cvv", "nif", "senha", "password", "mbway",
     )
 
+    private val callbackScamPhoneRegex = Regex("""(?:\+?351\s*)?\d{9}\b""")
+
     /**
      * Recebe texto já normalizado (TextNormalizer.normalize) e a lista de URLs
      * extraída por UrlExtractor.
@@ -32,6 +34,21 @@ object OtpDetector {
         if (urls.isNotEmpty()) return false
         if (paymentThreatKeywords.any { normalizedText.contains(it) }) return false
         if (sensitiveDataKeywords.any { normalizedText.contains(it) }) return false
+        if (looksLikeCallbackScam(normalizedText)) return false
         return true
+    }
+
+    private fun looksLikeCallbackScam(normalizedText: String): Boolean {
+        val callbackKeywords = listOf(
+            "saque",
+            "levantamento",
+            "ligue",
+            "telefone",
+            "chame",
+            "chamar",
+        )
+
+        return callbackKeywords.any { normalizedText.contains(it) } &&
+            callbackScamPhoneRegex.containsMatchIn(normalizedText)
     }
 }

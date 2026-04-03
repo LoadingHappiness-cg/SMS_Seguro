@@ -76,7 +76,9 @@ object RuleUpdateScheduler {
         WorkManager.getInstance(context)
             .enqueueUniqueWork(
                 WORK_CHECK_NOW_NAME,
-                ExistingWorkPolicy.KEEP,
+                // Manual checks must force a fresh run so a new OTA ruleset can be fetched
+                // even after a previous successful or stale one-time check.
+                ExistingWorkPolicy.REPLACE,
                 request
             )
 

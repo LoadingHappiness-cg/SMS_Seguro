@@ -64,6 +64,7 @@ fun MainScreen(launchIntent: Intent? = null) {
     var selectedTab by remember { mutableIntStateOf(resolveSelectedTab(launchIntent)) }
     var isProtectionReady by remember { mutableStateOf(PermissionHealth(context).isProtectionReady()) }
     var repairRequestNonce by remember { mutableIntStateOf(0) }
+    var historyRefreshNonce by remember { mutableIntStateOf(0) }
 
     fun refreshProtectionReady() {
         isProtectionReady = PermissionHealth(context).isProtectionReady()
@@ -162,8 +163,11 @@ fun MainScreen(launchIntent: Intent? = null) {
             color = MaterialTheme.colorScheme.surface,
         ) {
             when (selectedTab) {
-                0 -> SetupScreen(repairRequestNonce = repairRequestNonce)
-                1 -> HistoryScreen()
+                0 -> SetupScreen(
+                    repairRequestNonce = repairRequestNonce,
+                    onHistoryCleared = { historyRefreshNonce += 1 },
+                )
+                1 -> HistoryScreen(refreshNonce = historyRefreshNonce)
                 2 -> AboutScreen()
             }
         }
