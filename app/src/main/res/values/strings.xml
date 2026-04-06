@@ -228,6 +228,8 @@ Recebi uma mensagem com um link e o SMS Seguro diz que parece perigoso e recomen
     <string name="foreground_notification_channel_description">Notificação persistente para manter a proteção ativa.</string>
     <string name="foreground_notification_title">Proteção ativa</string>
     <string name="foreground_notification_text">SMS Seguro está a proteger mensagens</string>
+    <string name="foreground_notification_title_discreet">SMS Seguro</string>
+    <string name="foreground_notification_text_discreet">Proteção em segundo plano</string>
 
     <!-- Risk levels -->
     <string name="risk_high">Perigo elevado</string>
@@ -295,6 +297,11 @@ Recebi uma mensagem com um link e o SMS Seguro diz que parece perigoso e recomen
     <string name="setup_foreground_hidden_dialog_xiaomi_hint">No Xiaomi, verifique as Notificações permanentes e o canal Proteção em execução.</string>
     <string name="setup_foreground_hidden_dialog_notifications">Abrir definições de notificações</string>
     <string name="setup_foreground_hidden_dialog_channel">Abrir canal Proteção em execução</string>
+    <string name="setup_foreground_mode_title">Modo discreto da proteção</string>
+    <string name="setup_foreground_mode_body">Mantém a proteção ativa com uma notificação mais neutra. O Android continua a mostrar uma notificação porque o serviço precisa de correr em primeiro plano.</string>
+    <string name="setup_foreground_mode_enabled">Modo discreto ativado</string>
+    <string name="setup_foreground_mode_disabled">Modo discreto desativado</string>
+    <string name="setup_foreground_mode_hint">Pode ser alterado a qualquer momento.</string>
     <string name="setup_diagnostics_title">Diagnóstico</string>
     <string name="setup_diagnostics_last_event">Último evento recebido</string>
     <string name="setup_diagnostics_last_risk">Último risco calculado</string>

@@ -38,6 +38,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -69,6 +70,7 @@ import com.smsguard.core.PermissionHealth
 import com.smsguard.core.ProtectionStatusReport
 import com.smsguard.core.XiaomiSupportInfo
 import com.smsguard.core.xiaomiSupportInfo
+import com.smsguard.notification.ForegroundNotificationPreferences
 import com.smsguard.notification.AlertNotifierChannels
 import com.smsguard.notification.ForegroundServiceNotifier
 import com.smsguard.rules.RuleLoader
@@ -116,11 +118,15 @@ fun SetupScreen(
     var protectionRefreshNonce by remember { mutableIntStateOf(0) }
     var foregroundRecoveryAttempted by remember { mutableStateOf(false) }
     var foregroundRecoveryNonce by remember { mutableIntStateOf(0) }
+    var discreetForegroundModeEnabled by remember {
+        mutableStateOf(ForegroundNotificationPreferences.isDiscreetModeEnabled(context))
+    }
 
     fun refreshProtectionStatus() {
         val health = PermissionHealth(context)
         protectionStatus = health.protectionStatusReport()
         ignoresBatteryOptimizations = health.isIgnoringBatteryOptimizations
+        discreetForegroundModeEnabled = ForegroundNotificationPreferences.isDiscreetModeEnabled(context)
     }
 
     fun canAttemptForegroundRecovery(report: ProtectionStatusReport = protectionStatus): Boolean {
@@ -383,6 +389,17 @@ fun SetupScreen(
 
             HistoryMaintenanceCard(
                 onClearHistory = { showClearHistoryDialog = true },
+            )
+
+            ForegroundModeCard(
+                discreetModeEnabled = discreetForegroundModeEnabled,
+                onToggle = { enabled ->
+                    discreetForegroundModeEnabled = enabled
+                    ForegroundNotificationPreferences.setDiscreetModeEnabled(context, enabled)
+                    if (PermissionHealth(context).isProtectionReady()) {
+                        context.restartProtectionService(showToast = false)
+                    }
+                },
                 modifier = Modifier.padding(horizontal = 20.dp),
             )
 
@@ -724,6 +741,59 @@ private fun HistoryMaintenanceCard(
                 shape = RoundedCornerShape(12.dp),
             ) {
                 Text(text = stringResource(R.string.clear_history_action))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ForegroundModeCard(
+    discreetModeEnabled: Boolean,
+    onToggle: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        shape = RoundedCornerShape(20.dp),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.setup_foreground_mode_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = stringResource(R.string.setup_foreground_mode_body),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(
+                            if (discreetModeEnabled) R.string.setup_foreground_mode_enabled else R.string.setup_foreground_mode_disabled,
+                        ),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = stringResource(R.string.setup_foreground_mode_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Switch(
+                    checked = discreetModeEnabled,
+                    onCheckedChange = onToggle,
+                )
             }
         }
     }
