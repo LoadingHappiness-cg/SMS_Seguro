@@ -1,9 +1,9 @@
 package com.smsguard.ui
 
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.time.Instant
+import java.util.TimeZone
 
 class SetupScreenDebugTest {
 
@@ -14,15 +14,13 @@ class SetupScreenDebugTest {
     }
 
     @Test
-    fun rulesetTimestampFormatting_usesPortugalStyle() {
-        val timestamp = Instant.parse("2026-01-15T09:05:00Z").toEpochMilli()
-
-        assertEquals("15/01/2026 09:05", formatRulesetTimestamp(timestamp))
-    }
-
-    @Test
-    fun rulesetPublishedAtFormatting_parsesIsoAndFallsBackForBlank() {
-        assertEquals("01/04/2026 12:51", formatRulesetPublishedAt("2026-04-01T11:51:30Z"))
-        assertEquals("Por verificar", formatRulesetPublishedAt(""))
+    fun formatRulesetLastUpdate_usesExpectedPattern() {
+        val originalTimeZone = TimeZone.getDefault()
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+            assertEquals("01/01/1970 00:00", formatRulesetLastUpdate(0L))
+        } finally {
+            TimeZone.setDefault(originalTimeZone)
+        }
     }
 }

@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -47,10 +46,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -74,39 +71,27 @@ import com.smsguard.notification.ForegroundNotificationPreferences
 import com.smsguard.notification.AlertNotifierChannels
 import com.smsguard.notification.ForegroundServiceNotifier
 import com.smsguard.rules.RuleLoader
-import com.smsguard.storage.HistoryStore
 import com.smsguard.update.RuleUpdateScheduler
 import com.smsguard.update.RuleUpdateWorker
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
-fun SetupScreen(
-    repairRequestNonce: Int = 0,
-    onHistoryCleared: () -> Unit = {},
-) {
+fun SetupScreen(repairRequestNonce: Int = 0) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val ruleLoader = remember { RuleLoader(context) }
-    val historyStore = remember { HistoryStore(context) }
     val prefs = remember { context.getSharedPreferences("ruleset_meta", Context.MODE_PRIVATE) }
     val workManager = remember { WorkManager.getInstance(context) }
-    val coroutineScope = rememberCoroutineScope()
     val xiaomiInfo = remember { context.xiaomiSupportInfo() }
-    val currentRuleSet = remember { ruleLoader.loadCurrent() }
 
-    var rulesetVersion by remember { mutableIntStateOf(currentRuleSet.version) }
-    var rulesetPublishedAt by remember { mutableStateOf(currentRuleSet.publishedAt) }
-    var rulesetLastCheckAt by remember { mutableLongStateOf(prefs.getLong("last_check_at", 0L)) }
+    var rulesetVersion by remember { mutableIntStateOf(ruleLoader.loadCurrent().version) }
+    var rulesetLastCheckAt by remember { mutableStateOf(prefs.getLong("last_check_at", 0L)) }
     var isChecking by remember { mutableStateOf(false) }
     var statusMessageRes by remember { mutableStateOf<Int?>(null) }
     var protectionStatus by remember { mutableStateOf(PermissionHealth(context).protectionStatusReport()) }
@@ -114,7 +99,6 @@ fun SetupScreen(
     var showActivationPrompt by remember { mutableStateOf(false) }
     var showNotificationPermissionBlocker by remember { mutableStateOf(false) }
     var showForegroundRecoveryDialog by remember { mutableStateOf(false) }
-    var showClearHistoryDialog by remember { mutableStateOf(false) }
     var protectionRefreshNonce by remember { mutableIntStateOf(0) }
     var foregroundRecoveryAttempted by remember { mutableStateOf(false) }
     var foregroundRecoveryNonce by remember { mutableIntStateOf(0) }
@@ -141,48 +125,6 @@ fun SetupScreen(
         context.restartProtectionService(showToast = false)
         foregroundRecoveryNonce += 1
         return true
-    }
-
-    fun triggerRulesUpdate(info: WorkInfo?) {
-        val isAlreadyRunning =
-            info?.state == WorkInfo.State.ENQUEUED ||
-                info?.state == WorkInfo.State.RUNNING ||
-                info?.state == WorkInfo.State.BLOCKED
-
-        if (isAlreadyRunning) {
-            statusMessageRes = R.string.already_checking
-            isChecking = true
-            return
-        }
-
-        if (!isNetworkConnected(context)) {
-            statusMessageRes = R.string.update_no_internet
-            isChecking = false
-            return
-        }
-
-        statusMessageRes = R.string.checking_updates
-        isChecking = true
-        RuleUpdateScheduler.runCheckNow(context)
-    }
-
-    fun clearProcessedHistory() {
-        coroutineScope.launch {
-            val cleared =
-                withContext(Dispatchers.IO) {
-                    runCatching {
-                        historyStore.clearProcessedHistory()
-                    }.isSuccess
-                }
-
-            showClearHistoryDialog = false
-            if (cleared) {
-                onHistoryCleared()
-                Toast.makeText(context, context.getString(R.string.clear_history_success), Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(context, context.getString(R.string.clear_history_failed), Toast.LENGTH_SHORT).show()
-            }
-        }
     }
 
     val requestNotificationsPermission =
@@ -235,9 +177,8 @@ fun SetupScreen(
         AlertNotifierChannels.ensure(context)
         ForegroundServiceNotifier.ensureChannel(context)
         RuleUpdateScheduler.schedulePeriodic(context)
-        refreshRulesetMeta(prefs, ruleLoader) { version, publishedAt, lastCheckAt ->
+        refreshRulesetMeta(prefs, ruleLoader) { version, lastCheckAt ->
             rulesetVersion = version
-            rulesetPublishedAt = publishedAt
             rulesetLastCheckAt = lastCheckAt
         }
         refreshProtectionStatus()
@@ -315,9 +256,8 @@ fun SetupScreen(
                         else -> R.string.update_failed
                     }
 
-                refreshRulesetMeta(prefs, ruleLoader) { version, publishedAt, lastCheckAt ->
+                refreshRulesetMeta(prefs, ruleLoader) { version, lastCheckAt ->
                     rulesetVersion = version
-                    rulesetPublishedAt = publishedAt
                     rulesetLastCheckAt = lastCheckAt
                 }
             }
@@ -371,24 +311,63 @@ fun SetupScreen(
                                 context.fixForegroundNotification(protectionStatus)
                             }
                         }
-                        ProtectionRepairAction.NONE -> triggerRulesUpdate(checkNowWorkInfo)
+                        ProtectionRepairAction.NONE -> {
+                    val info = checkNowWorkInfo
+                    val isAlreadyRunning =
+                        info?.state == WorkInfo.State.ENQUEUED ||
+                            info?.state == WorkInfo.State.RUNNING ||
+                            info?.state == WorkInfo.State.BLOCKED
+
+                    if (isAlreadyRunning) {
+                        statusMessageRes = R.string.already_checking
+                        isChecking = true
+                        return@ProtectionStatusCard
+                    }
+
+                    if (!isNetworkConnected(context)) {
+                        statusMessageRes = R.string.update_no_internet
+                        isChecking = false
+                        return@ProtectionStatusCard
+                    }
+
+                    statusMessageRes = R.string.checking_updates
+                    isChecking = true
+                    RuleUpdateScheduler.runCheckNow(context)
+                        }
                     }
                 },
                 modifier = Modifier.padding(horizontal = 20.dp),
             )
 
-            RulesetUpdateCard(
+            RulesUpdateCard(
                 version = rulesetVersion,
-                publishedAt = rulesetPublishedAt,
                 lastCheckAt = rulesetLastCheckAt,
                 isChecking = isChecking,
                 statusMessageRes = statusMessageRes,
-                onCheckNow = { triggerRulesUpdate(checkNowWorkInfo) },
-                modifier = Modifier.padding(horizontal = 20.dp),
-            )
+                onCheckNow = {
+                    val info = checkNowWorkInfo
+                    val isAlreadyRunning =
+                        info?.state == WorkInfo.State.ENQUEUED ||
+                            info?.state == WorkInfo.State.RUNNING ||
+                            info?.state == WorkInfo.State.BLOCKED
 
-            HistoryMaintenanceCard(
-                onClearHistory = { showClearHistoryDialog = true },
+                    if (isAlreadyRunning) {
+                        statusMessageRes = R.string.already_checking
+                        isChecking = true
+                        return@RulesUpdateCard
+                    }
+
+                    if (!isNetworkConnected(context)) {
+                        statusMessageRes = R.string.update_no_internet
+                        isChecking = false
+                        return@RulesUpdateCard
+                    }
+
+                    statusMessageRes = R.string.checking_updates
+                    isChecking = true
+                    RuleUpdateScheduler.runCheckNow(context)
+                },
+                modifier = Modifier.padding(horizontal = 20.dp),
             )
 
             ForegroundModeCard(
@@ -476,24 +455,6 @@ fun SetupScreen(
                     context.openForegroundChannelSettings()
                 },
                 onDismiss = { showForegroundRecoveryDialog = false },
-            )
-        }
-
-        if (showClearHistoryDialog) {
-            AlertDialog(
-                onDismissRequest = { showClearHistoryDialog = false },
-                title = { Text(text = stringResource(R.string.clear_history_confirm_title)) },
-                text = { Text(text = stringResource(R.string.clear_history_confirm_body)) },
-                confirmButton = {
-                    TextButton(onClick = { clearProcessedHistory() }) {
-                        Text(text = stringResource(R.string.clear_history_confirm_clear))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showClearHistoryDialog = false }) {
-                        Text(text = stringResource(R.string.clear_history_confirm_cancel))
-                    }
-                },
             )
         }
     }
@@ -612,31 +573,27 @@ private fun ProtectionStatusCard(
                 missingText = stringResource(R.string.setup_status_inactive),
             )
 
-            FilledTonalButton(
-                onClick = onPrimaryAction,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-            ) {
-                Icon(
-                    imageVector =
-                        if (primaryAction == ProtectionRepairAction.NONE) {
-                            Icons.Outlined.Refresh
-                        } else {
-                            Icons.Outlined.Security
-                        },
-                    contentDescription = null,
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(primaryActionLabelResId))
+            if (primaryAction != ProtectionRepairAction.NONE) {
+                FilledTonalButton(
+                    onClick = onPrimaryAction,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Security,
+                        contentDescription = null,
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(primaryActionLabelResId))
+                }
             }
         }
     }
 }
 
 @Composable
-private fun RulesetUpdateCard(
+private fun RulesUpdateCard(
     version: Int,
-    publishedAt: String,
     lastCheckAt: Long,
     isChecking: Boolean,
     statusMessageRes: Int?,
@@ -644,10 +601,6 @@ private fun RulesetUpdateCard(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val statusText = rulesUpdateStatus(isChecking, statusMessageRes, context)
-    val resultText =
-        statusMessageRes?.takeIf { it != R.string.checking_updates && it != R.string.already_checking }
-            ?.let { stringResource(it) }
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -663,84 +616,78 @@ private fun RulesetUpdateCard(
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-
-            RulesetMetaRow(
-                label = stringResource(R.string.setup_ruleset_version_label),
-                value = stringResource(R.string.setup_ruleset_version, version),
-            )
-            RulesetMetaRow(
-                label = stringResource(R.string.setup_ruleset_published_at),
-                value = formatRulesetPublishedAt(publishedAt),
-            )
-            RulesetMetaRow(
-                label = stringResource(R.string.setup_ruleset_last_check),
-                value = formatRulesetTimestamp(lastCheckAt),
-            )
-            RulesetMetaRow(
-                label = stringResource(R.string.setup_ruleset_status),
-                value = statusText,
-            )
-
-            if (resultText != null) {
-                RulesetMetaRow(
-                    label = stringResource(R.string.setup_ruleset_result),
-                    value = resultText,
-                )
-            }
-
-            if (isChecking) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.rules_version),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = stringResource(R.string.setup_ruleset_version, version),
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.last_check),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text =
+                            if (lastCheckAt > 0L) {
+                                formatRulesetLastUpdate(lastCheckAt)
+                            } else {
+                                stringResource(R.string.never)
+                            },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.update_status_title),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = rulesUpdateStatus(isChecking, statusMessageRes, context = context),
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                        color =
+                            if (rulesUpdateHealthy(isChecking, statusMessageRes)) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            },
+                    )
+                }
             }
 
             FilledTonalButton(
                 onClick = onCheckNow,
-                enabled = !isChecking,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
             ) {
-                Icon(Icons.Outlined.Refresh, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text =
-                        stringResource(
-                            if (isChecking) R.string.checking_updates else R.string.setup_check_updates_now,
-                        ),
+                Icon(
+                    imageVector = Icons.Outlined.Refresh,
+                    contentDescription = null,
                 )
-            }
-        }
-    }
-}
-
-@Composable
-private fun HistoryMaintenanceCard(
-    onClearHistory: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        shape = RoundedCornerShape(20.dp),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.clear_history_title),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text = stringResource(R.string.clear_history_description),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            FilledTonalButton(
-                onClick = onClearHistory,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-            ) {
-                Text(text = stringResource(R.string.clear_history_action))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.setup_check_updates_now))
             }
         }
     }
@@ -796,30 +743,6 @@ private fun ForegroundModeCard(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun RulesetMetaRow(
-    label: String,
-    value: String,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.widthIn(max = 160.dp),
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
     }
 }
 
@@ -1038,34 +961,19 @@ private fun rulesUpdateHealthy(
                 statusMessageRes == R.string.rules_up_to_date
         )
 
+internal fun formatRulesetLastUpdate(timestampMillis: Long): String {
+    val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+    return sdf.format(Date(timestampMillis))
+}
+
 private fun refreshRulesetMeta(
     prefs: android.content.SharedPreferences,
     ruleLoader: RuleLoader,
-    onResult: (version: Int, publishedAt: String, lastCheckAt: Long) -> Unit,
+    onResult: (version: Int, lastCheckAt: Long) -> Unit,
 ) {
-    val current = ruleLoader.loadCurrent()
     val version = prefs.getInt("ruleset_version", -1).let { stored ->
-        if (stored > 0) stored else current.version
+        if (stored > 0) stored else ruleLoader.loadCurrent().version
     }
-    val publishedAt = current.publishedAt
     val lastCheckAt = prefs.getLong("last_check_at", 0L)
-    onResult(version, publishedAt, lastCheckAt)
+    onResult(version, lastCheckAt)
 }
-
-internal fun formatRulesetTimestamp(timestampMillis: Long): String {
-    if (timestampMillis <= 0L) return "Nunca"
-    return rulesetDateFormatter.format(Instant.ofEpochMilli(timestampMillis))
-}
-
-internal fun formatRulesetPublishedAt(publishedAt: String): String {
-    if (publishedAt.isBlank()) return "Por verificar"
-    return runCatching {
-        rulesetDateFormatter.format(Instant.parse(publishedAt))
-    }.getOrElse {
-        publishedAt
-    }
-}
-
-private val rulesetDateFormatter: DateTimeFormatter =
-    DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale("pt", "PT"))
-        .withZone(ZoneId.of("Europe/Lisbon"))
