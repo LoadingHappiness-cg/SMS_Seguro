@@ -163,10 +163,7 @@ fun MainScreen(launchIntent: Intent? = null) {
             color = MaterialTheme.colorScheme.surface,
         ) {
             when (selectedTab) {
-                0 -> SetupScreen(
-                    repairRequestNonce = repairRequestNonce,
-                    onHistoryCleared = { historyRefreshNonce += 1 },
-                )
+                0 -> SetupScreen(repairRequestNonce = repairRequestNonce)
                 1 -> HistoryScreen(refreshNonce = historyRefreshNonce)
                 2 -> AboutScreen()
             }

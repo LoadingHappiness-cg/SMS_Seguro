@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## v0.1.9
+
+Release focada em tornar a proteção mais discreta e mais clara para beta testers.
+
+- Reintroduzida a secção de atualizações OTA com versão, data e estado visíveis.
+- Restaurado o botão "Procurar atualizações agora" no ecrã de proteção.
+- Adicionado modo discreto para a notificação persistente do foreground service.
+- Melhorada a higiene dos motivos mostrados ao utilizador, evitando IDs técnicos na UI.
+- Recalibrada a pontuação da fraude bancária por callback para reduzir sobreposição de sinais.
+- Reforçada a robustez das regras OTA com tratamento seguro de regex inválidas.
+- Mantida a deteção de fraude bancária com regras OTA assinadas.
+
 ## v0.1.8
 
 Release focada em tornar a proteção mais discreta e mais clara para beta testers.
