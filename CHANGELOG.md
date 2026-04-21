@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## v0.9.0-beta
+
+SMS Seguro entra numa fase beta mais madura, com foco em deteção mais precisa e comunicação mais clara para testers.
+
+- Melhor deteção de burlas bancárias por callback em SMS de Portugal.
+- Texto de alerta em PT-PT mais claro e mais consistente.
+- Fallback seguro para motivos OTA desconhecidos.
+- Estado e versão das regras OTA visíveis no ecrã de Setup.
+- Opção para limpar o histórico processado.
+- Pontuação menos agressiva para mensagens com linguagem bancária, reduzindo falsos positivos.
+- Suporte OTA das rulesets e hardening recente mantidos.
+
 ## v0.1.9
 
 Release focada em tornar a proteção mais discreta e mais clara para beta testers.

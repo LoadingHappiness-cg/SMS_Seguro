@@ -38,8 +38,8 @@ android {
         applicationId "com.smsguard"
         minSdk 28
         targetSdk 35
-        versionCode 9
-        versionName "0.1.9-alpha"
+        versionCode 10
+        versionName "0.9.0-beta"
 
         buildConfigField "String", "RULESET_JSON_URL", "\"https://raw.githubusercontent.com/LoadingHappiness-cg/SMS_Seguro/main/rules/ruleset-latest.json\""
         buildConfigField "String", "RULESET_SIG_URL", "\"https://raw.githubusercontent.com/LoadingHappiness-cg/SMS_Seguro/main/rules/ruleset-latest.sig\""
