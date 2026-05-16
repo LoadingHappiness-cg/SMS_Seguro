@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:networkSecurityConfig="@xml/debug_network_security_config"
+        android:usesCleartextTraffic="true">
+
+        <receiver
+            android:name=".debug.DebugSmokeInjectionReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.smsguard.debug.SMOKE_INJECT" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>

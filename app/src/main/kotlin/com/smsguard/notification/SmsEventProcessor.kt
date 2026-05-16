@@ -291,4 +291,23 @@ object SmsEventProcessor {
     ) {
         executor.execute(work)
     }
+
+    internal fun enqueueProcess(
+        context: Context,
+        sender: String,
+        rawText: String,
+        source: String,
+        packageName: String? = null,
+        executor: Executor = backgroundExecutor,
+    ) {
+        dispatchProcess(executor) {
+            process(
+                context = context,
+                sender = sender,
+                rawText = rawText,
+                source = source,
+                packageName = packageName,
+            )
+        }
+    }
 }
