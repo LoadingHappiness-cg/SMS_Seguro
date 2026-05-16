@@ -7,9 +7,13 @@ import com.smsguard.core.AlertType
 import com.smsguard.core.HistoryEvent
 import com.smsguard.core.MultibancoDetector
 import com.smsguard.core.OtpDetector
+import com.smsguard.core.HttpLinkEnrichmentClient
+import com.smsguard.core.RemoteEnrichmentConfig
+import com.smsguard.core.RemoteEnrichmentCoordinator
 import com.smsguard.core.RiskAssessment
 import com.smsguard.core.RiskEngine
 import com.smsguard.core.RiskLevel
+import com.smsguard.core.ScoreThresholds
 import com.smsguard.core.TextNormalizer
 import com.smsguard.core.TrustedAuthFlowDetector
 import com.smsguard.core.UrlExtractor
@@ -28,6 +32,14 @@ object SmsEventProcessor {
 
     @Volatile
     private var cachedRiskEngine: RiskEngine? = null
+
+    @Volatile
+    private var cachedThresholds: ScoreThresholds? = null
+
+    @Volatile
+    private var cachedRemoteCoordinator: RemoteEnrichmentCoordinator? = null
+
+    internal var remoteCoordinatorOverride: RemoteEnrichmentCoordinator? = null
 
     fun process(
         context: Context,
@@ -56,7 +68,7 @@ object SmsEventProcessor {
         }
 
         val riskEngine = ensureRiskEngine(context)
-        val result =
+        val localResult =
             riskEngine.analyze(
                 messageText = text,
                 normalizedText = normalizedText,
@@ -64,6 +76,11 @@ object SmsEventProcessor {
                 urls = urls,
                 multibancoData = mbData,
             )
+        val result =
+            resolveRemoteCoordinator().enrich(
+                local = localResult,
+                thresholds = ensureThresholds(context),
+            ).risk
 
         AppLogger.d("ProbeB risk evaluated source=$source package=${packageName.orEmpty()} level=${result.level} score=${result.score} reasons=${result.reasons.take(3).joinToString(",")} timestamp=${System.currentTimeMillis()}")
         AlertPipelineDiagnostics.recordRisk(
@@ -149,8 +166,44 @@ object SmsEventProcessor {
             if (current != null && version == cachedRulesetVersion) return current
             val ruleSet = RuleLoader(context).loadCurrent()
             cachedRulesetVersion = ruleSet.version
+            cachedThresholds = ruleSet.scoring.thresholds
             val created = RiskEngine(ruleSet)
             cachedRiskEngine = created
+            return created
+        }
+    }
+
+    private fun ensureThresholds(context: Context): ScoreThresholds {
+        val thresholds = cachedThresholds
+        if (thresholds != null) return thresholds
+
+        synchronized(this) {
+            val current = cachedThresholds
+            if (current != null) return current
+            val loaded = RuleLoader(context).loadCurrent().scoring.thresholds
+            cachedThresholds = loaded
+            return loaded
+        }
+    }
+
+    private fun resolveRemoteCoordinator(): RemoteEnrichmentCoordinator {
+        remoteCoordinatorOverride?.let { return it }
+
+        val current = cachedRemoteCoordinator
+        if (current != null) return current
+
+        synchronized(this) {
+            remoteCoordinatorOverride?.let { return it }
+            val existing = cachedRemoteCoordinator
+            if (existing != null) return existing
+
+            val config = RemoteEnrichmentConfig.fromBuildConfig()
+            val created =
+                RemoteEnrichmentCoordinator(
+                    config = config,
+                    client = HttpLinkEnrichmentClient(config),
+                )
+            cachedRemoteCoordinator = created
             return created
         }
     }

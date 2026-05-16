@@ -468,6 +468,16 @@ internal fun reasonLabelResId(code: String): Int? =
         "correlation_brand_url_mismatch" -> R.string.reason_brand_url_mismatch
         "data_request_minimum_medium" -> R.string.reason_data_request_minimum_medium
         "non_latin_url_minimum_medium" -> R.string.reason_non_latin_url_minimum_medium
+        "remote_dns_blocked" -> R.string.reason_remote_dns_blocked
+        "remote_ip_reputation_flagged" -> R.string.reason_remote_ip_reputation_flagged
+        "remote_ip_reputation_high" -> R.string.reason_remote_ip_reputation_flagged
+        "remote_resolved_ip_count_unusual" -> R.string.reason_remote_resolved_ip_count_unusual
+        "contextual_transfer_received" -> R.string.reason_contextual_transfer_received
+        "contextual_refund_request_after_transfer" -> R.string.reason_contextual_refund_request_after_transfer
+        "contextual_transfer_contact_pattern" -> R.string.reason_contextual_transfer_contact_pattern
+        "contextual_whatsapp_source" -> R.string.reason_contextual_whatsapp_source
+        "contextual_new_destination" -> R.string.reason_contextual_new_destination
+        "contextual_urgent_language" -> R.string.reason_contextual_urgent_language
         "safe_domain" -> R.string.reason_safe_domain
         "shortener" -> R.string.reason_shortener
         "suspicious_tld" -> R.string.reason_suspicious_tld

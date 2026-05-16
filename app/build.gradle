@@ -43,6 +43,9 @@ android {
 
         buildConfigField "String", "RULESET_JSON_URL", "\"https://raw.githubusercontent.com/LoadingHappiness-cg/SMS_Seguro/main/rules/ruleset-latest.json\""
         buildConfigField "String", "RULESET_SIG_URL", "\"https://raw.githubusercontent.com/LoadingHappiness-cg/SMS_Seguro/main/rules/ruleset-latest.sig\""
+        buildConfigField "boolean", "REMOTE_ENRICHMENT_ENABLED", "false"
+        buildConfigField "String", "REMOTE_ENRICHMENT_BASE_URL", "\"\""
+        buildConfigField "int", "REMOTE_ENRICHMENT_TIMEOUT_MS", "1500"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
