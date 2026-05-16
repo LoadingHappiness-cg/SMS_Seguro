@@ -23,7 +23,7 @@ class RemoteEnrichmentCoordinatorTest {
         var calls = 0
         val coordinator =
             RemoteEnrichmentCoordinator(
-                config = RemoteEnrichmentConfig(enabled = false, baseUrl = "https://backend.example"),
+                config = RemoteEnrichmentConfig(enabled = false, allowedInBuild = true, baseUrl = "https://backend.example"),
                 client = object : LinkEnrichmentClient {
                     override fun enrich(host: String): LinkEnrichmentResponse {
                         calls += 1
@@ -43,7 +43,7 @@ class RemoteEnrichmentCoordinatorTest {
     fun timeoutOrFailure_keepsLocalResult() {
         val coordinator =
             RemoteEnrichmentCoordinator(
-                config = RemoteEnrichmentConfig(enabled = true, baseUrl = "https://backend.example"),
+                config = RemoteEnrichmentConfig(enabled = true, allowedInBuild = true, baseUrl = "https://backend.example"),
                 client = object : LinkEnrichmentClient {
                     override fun enrich(host: String): LinkEnrichmentResponse {
                         throw java.net.SocketTimeoutException("timed out")
@@ -62,7 +62,7 @@ class RemoteEnrichmentCoordinatorTest {
         var calls = 0
         val coordinator =
             RemoteEnrichmentCoordinator(
-                config = RemoteEnrichmentConfig(enabled = true, baseUrl = "https://backend.example"),
+                config = RemoteEnrichmentConfig(enabled = true, allowedInBuild = true, baseUrl = "https://backend.example"),
                 client = object : LinkEnrichmentClient {
                     override fun enrich(host: String): LinkEnrichmentResponse {
                         calls += 1
@@ -80,9 +80,16 @@ class RemoteEnrichmentCoordinatorTest {
 
     @Test
     fun successfulEnrichment_mergesRemoteSignalsIntoLocalResult() {
+        val traces = mutableListOf<String>()
         val coordinator =
             RemoteEnrichmentCoordinator(
-                config = RemoteEnrichmentConfig(enabled = true, baseUrl = "https://backend.example"),
+                config =
+                    RemoteEnrichmentConfig(
+                        enabled = true,
+                        allowedInBuild = true,
+                        baseUrl = "https://backend.example",
+                        traceEnabled = true,
+                    ),
                 client = object : LinkEnrichmentClient {
                     override fun enrich(host: String): LinkEnrichmentResponse {
                         assertEquals("apoio-seguro.example", host)
@@ -96,6 +103,7 @@ class RemoteEnrichmentCoordinatorTest {
                         )
                     }
                 },
+                traceSink = { traces += it },
             )
 
         val merged = coordinator.enrich(localResult, thresholds)
@@ -104,5 +112,6 @@ class RemoteEnrichmentCoordinatorTest {
         assertEquals(80, merged.risk.score)
         assertTrue(merged.risk.reasons.contains("remote_dns_blocked"))
         assertEquals(DnsProvider.QUAD9, merged.remote?.dnsProvider)
+        assertTrue(traces.any { it.contains("success host=apoio-seguro.example") })
     }
 }

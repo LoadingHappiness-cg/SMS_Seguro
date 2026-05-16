@@ -14,6 +14,15 @@ def releaseStoreFilePath = releaseSigningProp('SMS_SEGURO_RELEASE_STORE_FILE')
 def releaseStorePassword = releaseSigningProp('SMS_SEGURO_RELEASE_STORE_PASSWORD')
 def releaseKeyAlias = releaseSigningProp('SMS_SEGURO_RELEASE_KEY_ALIAS')
 def releaseKeyPassword = releaseSigningProp('SMS_SEGURO_RELEASE_KEY_PASSWORD')
+def remoteDebugProp = { String key, String fallback ->
+    return providers.gradleProperty(key)
+        .orElse(providers.environmentVariable(key))
+        .orElse(fallback)
+        .get()
+}
+def asBuildConfigString = { String value ->
+    return "\"${value.replace("\\", "\\\\").replace("\"", "\\\"") }\""
+}
 
 java {
     toolchain {
@@ -43,9 +52,11 @@ android {
 
         buildConfigField "String", "RULESET_JSON_URL", "\"https://raw.githubusercontent.com/LoadingHappiness-cg/SMS_Seguro/main/rules/ruleset-latest.json\""
         buildConfigField "String", "RULESET_SIG_URL", "\"https://raw.githubusercontent.com/LoadingHappiness-cg/SMS_Seguro/main/rules/ruleset-latest.sig\""
+        buildConfigField "boolean", "REMOTE_ENRICHMENT_ALLOWED", "false"
         buildConfigField "boolean", "REMOTE_ENRICHMENT_ENABLED", "false"
         buildConfigField "String", "REMOTE_ENRICHMENT_BASE_URL", "\"\""
         buildConfigField "int", "REMOTE_ENRICHMENT_TIMEOUT_MS", "1500"
+        buildConfigField "boolean", "REMOTE_ENRICHMENT_TRACE", "false"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -65,6 +76,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField "boolean", "REMOTE_ENRICHMENT_ALLOWED", "true"
+            buildConfigField "boolean", "REMOTE_ENRICHMENT_ENABLED", remoteDebugProp("SMS_SEGURO_REMOTE_ENRICHMENT_DEBUG_ENABLED", "false")
+            buildConfigField "String", "REMOTE_ENRICHMENT_BASE_URL", asBuildConfigString(remoteDebugProp("SMS_SEGURO_REMOTE_ENRICHMENT_DEBUG_BASE_URL", ""))
+            buildConfigField "boolean", "REMOTE_ENRICHMENT_TRACE", remoteDebugProp("SMS_SEGURO_REMOTE_ENRICHMENT_DEBUG_TRACE", "true")
+        }
         release {
             minifyEnabled true
             shrinkResources true

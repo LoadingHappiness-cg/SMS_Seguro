@@ -10,18 +10,25 @@ import java.util.concurrent.TimeUnit
 
 data class RemoteEnrichmentConfig(
     val enabled: Boolean,
+    val allowedInBuild: Boolean,
     val baseUrl: String,
     val timeoutMs: Long = 1_500L,
+    val traceEnabled: Boolean = false,
 ) {
     val isActive: Boolean
-        get() = enabled && baseUrl.isNotBlank()
+        get() = allowedInBuild && enabled && baseUrl.isNotBlank()
+
+    val shouldTrace: Boolean
+        get() = allowedInBuild && enabled && traceEnabled
 
     companion object {
         fun fromBuildConfig(): RemoteEnrichmentConfig =
             RemoteEnrichmentConfig(
                 enabled = BuildConfig.REMOTE_ENRICHMENT_ENABLED,
+                allowedInBuild = BuildConfig.REMOTE_ENRICHMENT_ALLOWED,
                 baseUrl = BuildConfig.REMOTE_ENRICHMENT_BASE_URL.trim(),
                 timeoutMs = BuildConfig.REMOTE_ENRICHMENT_TIMEOUT_MS.toLong(),
+                traceEnabled = BuildConfig.REMOTE_ENRICHMENT_TRACE,
             )
     }
 }
@@ -106,6 +113,7 @@ class HttpLinkEnrichmentClient(
 class RemoteEnrichmentCoordinator(
     private val config: RemoteEnrichmentConfig,
     private val client: LinkEnrichmentClient,
+    private val traceSink: (String) -> Unit = { message -> AppLogger.d(message) },
 ) {
 
     fun enrich(
@@ -113,17 +121,36 @@ class RemoteEnrichmentCoordinator(
         thresholds: ScoreThresholds,
     ): RemoteRiskMergeResult {
         if (!config.isActive) {
+            trace(
+                "RemoteEnrichment skip inactive " +
+                    "allowed=${config.allowedInBuild} enabled=${config.enabled} " +
+                    "baseUrlPresent=${config.baseUrl.isNotBlank()}",
+            )
             return RemoteRiskMerger.merge(local, remote = null, thresholds = thresholds)
         }
 
         val host = RemoteEnrichmentHostValidator.normalize(local.primaryDomain)
-            ?: return RemoteRiskMerger.merge(local, remote = null, thresholds = thresholds)
+            ?: run {
+                trace("RemoteEnrichment skip invalid_host value=${local.primaryDomain}")
+                return RemoteRiskMerger.merge(local, remote = null, thresholds = thresholds)
+            }
 
         return runCatching {
             val remote = client.enrich(host)
+            trace(
+                "RemoteEnrichment success host=$host dnsBlocked=${remote.dnsBlocked} " +
+                    "delta=${remote.riskDelta} reasons=${remote.reasons.joinToString(",")}",
+            )
             RemoteRiskMerger.merge(local, remote = remote, thresholds = thresholds)
         }.getOrElse {
+            trace("RemoteEnrichment fail_open host=$host error=${it::class.simpleName}")
             RemoteRiskMerger.merge(local, remote = null, thresholds = thresholds)
+        }
+    }
+
+    private fun trace(message: String) {
+        if (config.shouldTrace) {
+            traceSink(message)
         }
     }
 }
