@@ -1,9 +1,28 @@
 import { createApp } from './server.js';
+import { loadConfig } from './config.js';
+import { createLogger } from './logger.js';
+import { createLinkEnrichmentService } from './linkEnrichmentService.js';
+import { createQuad9Resolver } from './quad9Resolver.js';
+import { createRateLimiter } from './rateLimiter.js';
 
-const port = Number.parseInt(process.env.PORT ?? '8787', 10);
+const config = loadConfig(process.env);
+const logger = createLogger({ level: config.logLevel });
+const app = createApp({
+  logger,
+  enrichHost: createLinkEnrichmentService({
+    resolver: createQuad9Resolver({
+      timeoutMs: config.quad9TimeoutMs
+    })
+  }),
+  rateLimiter: createRateLimiter({
+    windowMs: config.rateLimitWindowMs,
+    maxRequests: config.rateLimitMaxRequests
+  })
+});
 
-const app = createApp();
-
-app.listen(port, '0.0.0.0', () => {
-  console.info(`sms-seguro link enrichment backend listening on :${port}`);
+app.listen(config.port, config.host, () => {
+  logger.info('backend listening', {
+    host: config.host,
+    port: config.port
+  });
 });
