@@ -8,6 +8,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.concurrent.Executor
 
 class SmsEventProcessorTest {
 
@@ -81,6 +82,22 @@ class SmsEventProcessorTest {
 
         assertFalse(notified)
         assertEquals(listOf("persist", "notify"), steps)
+    }
+
+    @Test
+    fun dispatchProcess_submitsWorkToBackgroundExecutor() {
+        val calls = mutableListOf<String>()
+        val executor =
+            Executor { runnable ->
+                calls += "execute"
+                runnable.run()
+            }
+
+        SmsEventProcessor.dispatchProcess(executor) {
+            calls += "work"
+        }
+
+        assertEquals(listOf("execute", "work"), calls)
     }
 
     private fun sampleHistoryEvent(): HistoryEvent =

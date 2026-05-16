@@ -58,13 +58,15 @@ class SmsNotificationListener : NotificationListenerService() {
                 packageName = pkg,
             )
 
-            SmsEventProcessor.process(
-                context = applicationContext,
-                sender = title,
-                rawText = fullText,
-                source = "notification_listener",
-                packageName = pkg,
-            )
+            SmsEventProcessor.dispatchProcess {
+                SmsEventProcessor.process(
+                    context = applicationContext,
+                    sender = title,
+                    rawText = fullText,
+                    source = "notification_listener",
+                    packageName = pkg,
+                )
+            }
         } catch (e: Exception) {
             AppLogger.e("ProbeA exception while processing SMS notification", e)
         }

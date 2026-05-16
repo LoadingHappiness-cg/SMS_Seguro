@@ -19,6 +19,8 @@ import com.smsguard.core.TrustedAuthFlowDetector
 import com.smsguard.core.UrlExtractor
 import com.smsguard.rules.RuleLoader
 import com.smsguard.storage.HistoryStore
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
 
 object SmsEventProcessor {
 
@@ -38,6 +40,8 @@ object SmsEventProcessor {
 
     @Volatile
     private var cachedRemoteCoordinator: RemoteEnrichmentCoordinator? = null
+
+    private val backgroundExecutor = Executors.newSingleThreadExecutor()
 
     internal var remoteCoordinatorOverride: RemoteEnrichmentCoordinator? = null
 
@@ -279,5 +283,12 @@ object SmsEventProcessor {
             }
             false
         }
+    }
+
+    internal fun dispatchProcess(
+        executor: Executor = backgroundExecutor,
+        work: () -> Unit,
+    ) {
+        executor.execute(work)
     }
 }
