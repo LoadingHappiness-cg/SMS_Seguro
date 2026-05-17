@@ -14,12 +14,12 @@ class RemoteReasonLabelTest {
                 code = "remote_dns_blocked",
                 resolve = { resId ->
                     assertEquals(R.string.reason_remote_dns_blocked, resId)
-                    "O domínio foi bloqueado pelo filtro DNS de segurança."
+                    "O destino do link apresenta sinais externos de risco."
                 },
                 fallback = "Mensagem considerada suspeita pelas regras de segurança.",
             )
 
-        assertEquals("O domínio foi bloqueado pelo filtro DNS de segurança.", text)
+        assertEquals("O destino do link apresenta sinais externos de risco.", text)
         assertFalse(text.contains("remote_dns_blocked"))
     }
 
@@ -30,11 +30,26 @@ class RemoteReasonLabelTest {
                 code = "remote_ip_reputation_flagged",
                 resolve = { resId ->
                     assertEquals(R.string.reason_remote_ip_reputation_flagged, resId)
-                    "O endereço de destino tem má reputação externa."
+                    "A validação do destino do link reforça a suspeita."
                 },
                 fallback = "Mensagem considerada suspeita pelas regras de segurança.",
             )
 
-        assertEquals("O endereço de destino tem má reputação externa.", text)
+        assertEquals("A validação do destino do link reforça a suspeita.", text)
+    }
+
+    @Test
+    fun cleanDestinationReason_usesNonAbsoluteTrustLanguage() {
+        val text =
+            reasonLabelText(
+                code = "safe_domain",
+                resolve = { resId ->
+                    assertEquals(R.string.reason_safe_domain, resId)
+                    "O destino do link não revelou sinais externos de risco."
+                },
+                fallback = "Mensagem considerada suspeita pelas regras de segurança.",
+            )
+
+        assertEquals("O destino do link não revelou sinais externos de risco.", text)
     }
 }

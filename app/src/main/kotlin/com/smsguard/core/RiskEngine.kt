@@ -199,6 +199,18 @@ class RiskEngine(private val ruleSet: RuleSet) {
             reasons.add("correlation_brand_url_mismatch_context")
         }
 
+        val senderBrandMismatchContext =
+            "correlation_brand_url_mismatch" in reasons &&
+                brandMismatchEscalationContext &&
+                isGenericOrNonInstitutionalSender(normalizedSender) &&
+                primaryBrand?.let { brand ->
+                    !senderAppearsRelatedToBrand(normalizedSender, brand)
+                } == true
+        if (senderBrandMismatchContext) {
+            score += 10
+            reasons.add("correlation_sender_brand_mismatch_context")
+        }
+
         val suspiciousLoginEscalationContext =
             ("urgency" in matchedGroups || "threat" in matchedGroups || "payment" in matchedGroups) &&
                 (hasAccountAccessContext || hasLoginPath)
@@ -296,4 +308,21 @@ class RiskEngine(private val ruleSet: RuleSet) {
 
     private fun containsPromotionalAteDatePhrase(normalizedMessage: String): Boolean =
         Regex("""\bate\s+\d{1,2}/\d{1,2}\b""").containsMatchIn(normalizedMessage)
+
+    private fun senderAppearsRelatedToBrand(
+        normalizedSender: String,
+        brand: String,
+    ): Boolean {
+        if (normalizedSender.isBlank()) return false
+        val compactSender = normalizedSender.filter(Char::isLetterOrDigit)
+        val compactBrand = brand.filter(Char::isLetterOrDigit)
+        return compactSender.contains(compactBrand) || compactBrand.contains(compactSender)
+    }
+
+    private fun isGenericOrNonInstitutionalSender(normalizedSender: String): Boolean {
+        if (normalizedSender.isBlank()) return false
+        if (normalizedSender.any(Char::isDigit)) return true
+        if (normalizedSender.contains(' ')) return true
+        return normalizedSender.all { it.isLetter() } && normalizedSender.length in 3..16
+    }
 }

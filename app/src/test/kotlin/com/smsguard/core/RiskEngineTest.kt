@@ -379,12 +379,14 @@ class RiskEngineTest {
         val result =
             engine.analyze(
                 messageText = "Veja os detalhes da sua encomenda FNAC em: https://example.com/info?id=2",
+                sender = "919999999",
                 urls = listOf("https://example.com/info?id=2"),
                 multibancoData = null,
             )
 
         assertEquals(RiskLevel.HIGH, result.level)
         assertTrue(result.reasons.contains("correlation_brand_url_mismatch"))
+        assertTrue(result.reasons.contains("correlation_sender_brand_mismatch_context"))
     }
 
     @Test
@@ -400,6 +402,22 @@ class RiskEngineTest {
 
         assertEquals(RiskLevel.LOW, result.level)
         assertFalse(result.reasons.contains("correlation_brand_url_mismatch"))
+    }
+
+    @Test
+    fun legitimateFnacOrderMessageWithCoherentDomainAndGenericSender_staysLowRisk() {
+        val engine = RiskEngine(ruleSet)
+
+        val result =
+            engine.analyze(
+                messageText = "Veja os detalhes da sua encomenda FNAC em: https://www.fnac.pt/info?id=2",
+                sender = "919999999",
+                urls = listOf("https://www.fnac.pt/info?id=2"),
+                multibancoData = null,
+            )
+
+        assertEquals(RiskLevel.LOW, result.level)
+        assertFalse(result.reasons.contains("correlation_sender_brand_mismatch_context"))
     }
 
     @Test

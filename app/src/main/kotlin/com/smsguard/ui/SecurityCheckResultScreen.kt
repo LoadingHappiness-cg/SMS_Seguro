@@ -466,6 +466,7 @@ internal fun reasonLabelResId(code: String): Int? =
         "mb_known_entity" -> R.string.reason_mb_known_entity
         "correlation_brand_entity_mismatch" -> R.string.reason_brand_entity_mismatch
         "correlation_brand_url_mismatch" -> R.string.reason_brand_url_mismatch
+        "correlation_sender_brand_mismatch_context" -> R.string.reason_sender_brand_mismatch
         "data_request_minimum_medium" -> R.string.reason_data_request_minimum_medium
         "non_latin_url_minimum_medium" -> R.string.reason_non_latin_url_minimum_medium
         "remote_dns_blocked" -> R.string.reason_remote_dns_blocked

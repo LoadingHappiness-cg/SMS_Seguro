@@ -256,7 +256,7 @@ Recebi uma mensagem com um link e o SMS Seguro diz que parece perigoso e recomen
     <string name="mb_notif_content_missing">Pedido de pagamento Multibanco detetado</string>
     <string name="mb_notif_bigtext_with_value">Entidade: %1$s\nReferência: %2$s\nValor: %3$s€</string>
 
-    <string name="reason_safe_domain">Domínio conhecido como seguro</string>
+    <string name="reason_safe_domain">O destino do link não revelou sinais externos de risco.</string>
     <string name="reason_shortener">Foi usado um encurtador de links</string>
     <string name="reason_suspicious_tld">Extensão do endereço pouco comum</string>
     <string name="reason_punycode">O endereço pode esconder caracteres</string>
@@ -281,11 +281,12 @@ Recebi uma mensagem com um link e o SMS Seguro diz que parece perigoso e recomen
     <string name="reason_mb_known_entity">Entidade conhecida, mas confirme sempre o destinatário.</string>
     <string name="reason_brand_entity_mismatch">Inconsistência entre a mensagem e a entidade de pagamento.</string>
     <string name="reason_brand_url_mismatch">Inconsistência entre a marca e o link apresentado.</string>
+    <string name="reason_sender_brand_mismatch">O remetente não combina com a marca indicada nem com o destino do link.</string>
     <string name="reason_data_request_minimum_medium">Pedido de código/PIN exige confirmação imediata.</string>
     <string name="reason_non_latin_url_minimum_medium">Link com caracteres não latinos — risco mínimo moderado.</string>
-    <string name="reason_remote_dns_blocked">O domínio foi bloqueado pelo filtro DNS de segurança.</string>
-    <string name="reason_remote_ip_reputation_flagged">O endereço de destino tem má reputação externa.</string>
-    <string name="reason_remote_resolved_ip_count_unusual">O domínio resolve para vários endereços, o que merece confirmação extra.</string>
+    <string name="reason_remote_dns_blocked">O destino do link apresenta sinais externos de risco.</string>
+    <string name="reason_remote_ip_reputation_flagged">A validação do destino do link reforça a suspeita.</string>
+    <string name="reason_remote_resolved_ip_count_unusual">O domínio deste link não transmite confiança.</string>
     <string name="reason_contextual_transfer_received">Recebeu dinheiro antes do pedido de devolução</string>
     <string name="reason_contextual_refund_request_after_transfer">O pedido de devolução surgiu pouco depois</string>
     <string name="reason_contextual_transfer_contact_pattern">Foi detetado um padrão de risco associado a transferência seguida de contacto</string>

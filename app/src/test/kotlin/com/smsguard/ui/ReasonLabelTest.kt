@@ -46,4 +46,19 @@ class ReasonLabelTest {
 
         assertEquals("Mensagem com padrão típico de fraude bancária", text)
     }
+
+    @Test
+    fun senderBrandMismatchReason_mapsToLocalizedString() {
+        val text =
+            reasonLabelText(
+                code = "correlation_sender_brand_mismatch_context",
+                resolve = { resId ->
+                    assertEquals(R.string.reason_sender_brand_mismatch, resId)
+                    "O remetente não combina com a marca indicada nem com o destino do link."
+                },
+                fallback = "Mensagem considerada suspeita pelas regras de segurança.",
+            )
+
+        assertEquals("O remetente não combina com a marca indicada nem com o destino do link.", text)
+    }
 }
