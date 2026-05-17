@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -136,13 +137,39 @@ fun HistoryItem(
                     }
                 }
                 AlertType.URL -> {
-                    val domain = event.domain.ifBlank { stringResource(com.smsguard.R.string.unknown) }
-                    Text(text = stringResource(com.smsguard.R.string.history_domain, domain), fontSize = 18.sp)
+                    val extraLinks = (event.linkCount - 1).coerceAtLeast(0)
+                    val extraLinksLabel =
+                        if (extraLinks > 0) {
+                            pluralStringResource(
+                                com.smsguard.R.plurals.history_extra_links,
+                                extraLinks,
+                                extraLinks,
+                            )
+                        } else {
+                            null
+                        }
+                    val domainLabel =
+                        formatHistoryDomainLabel(
+                            domain = event.domain,
+                            unknownLabel = stringResource(com.smsguard.R.string.unknown),
+                            extraLinksLabel = extraLinksLabel,
+                        )
+                    Text(text = stringResource(com.smsguard.R.string.history_domain, domainLabel), fontSize = 18.sp)
                 }
             }
             Text(text = date, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+}
+
+internal fun formatHistoryDomainLabel(
+    domain: String,
+    unknownLabel: String,
+    extraLinksLabel: String? = null,
+): String {
+    val resolvedDomain = domain.ifBlank { unknownLabel }
+    if (extraLinksLabel.isNullOrBlank()) return resolvedDomain
+    return "$resolvedDomain $extraLinksLabel"
 }
 
 private fun openAlertFromHistory(context: Context, event: HistoryEvent) {

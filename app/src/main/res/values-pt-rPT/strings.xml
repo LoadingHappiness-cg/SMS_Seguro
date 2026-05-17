@@ -120,6 +120,10 @@
     <string name="history_title">Histórico</string>
     <string name="history_detection_title">Histórico de deteções</string>
     <string name="history_domain">Domínio: %1$s</string>
+    <plurals name="history_extra_links">
+        <item quantity="one">(+%1$d link)</item>
+        <item quantity="other">(+%1$d links)</item>
+    </plurals>
 
     <string name="alert_title">Alerta de segurança</string>
     <string name="security_check_title">Verificação de segurança</string>

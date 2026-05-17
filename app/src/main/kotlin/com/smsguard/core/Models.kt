@@ -13,6 +13,7 @@ data class HistoryEvent(
     val sender: String,
     val messageText: String? = null,
     val domain: String = "",
+    val linkCount: Int = 0,
     val url: String? = null,
     val alertType: AlertType = AlertType.URL,
     val multibancoEntidade: String? = null,

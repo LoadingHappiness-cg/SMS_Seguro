@@ -127,6 +127,7 @@ object SmsEventProcessor {
                 sender = sender,
                 messageText = text,
                 domain = result.primaryDomain,
+                linkCount = urls.size,
                 url = result.primaryUrl.takeIf { it.isNotBlank() },
                 alertType = alertType,
                 multibancoEntidade = mbData?.entidade,
