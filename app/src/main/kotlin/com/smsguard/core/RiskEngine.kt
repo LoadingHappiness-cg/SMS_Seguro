@@ -60,6 +60,16 @@ class RiskEngine(private val ruleSet: RuleSet) {
         val urlHosts = urls.map { UrlExtractor.getDomain(it).lowercase() }.filter { it.isNotBlank() }
         val primaryUrl = urls.firstOrNull().orEmpty()
         val primaryDomain = urlHosts.firstOrNull().orEmpty()
+        val hasLoginPath =
+            urls.any { url ->
+                url.contains("/login", ignoreCase = true) || url.contains("/signin", ignoreCase = true)
+            }
+        val hasAccountAccessContext =
+            containsAny(
+                normalizedText = normalizedText,
+                normalizedSender = normalizedSender,
+                tokens = listOf("acesso", "login", "iniciar sessao", "sessao", "conta"),
+            )
 
         if (urls.isNotEmpty()) {
             score += ruleSet.urlSignals.weights.hasUrl
@@ -176,6 +186,25 @@ class RiskEngine(private val ruleSet: RuleSet) {
                     reasons.add("correlation_brand_url_mismatch")
                 }
             }
+        }
+
+        val brandMismatchEscalationContext =
+            "delivery" in matchedGroups ||
+                "payment" in matchedGroups ||
+                "banking" in matchedGroups ||
+                "dataRequest" in matchedGroups ||
+                hasAccountAccessContext
+        if ("correlation_brand_url_mismatch" in reasons && brandMismatchEscalationContext) {
+            score += 20
+            reasons.add("correlation_brand_url_mismatch_context")
+        }
+
+        val suspiciousLoginEscalationContext =
+            ("urgency" in matchedGroups || "threat" in matchedGroups || "payment" in matchedGroups) &&
+                (hasAccountAccessContext || hasLoginPath)
+        if ("url_suspicious_tld" in reasons && suspiciousLoginEscalationContext) {
+            score += 20
+            reasons.add("url_suspicious_tld_context")
         }
 
         val mediumThreshold = ruleSet.scoring.thresholds.medium

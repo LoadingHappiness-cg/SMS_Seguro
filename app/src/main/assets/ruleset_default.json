@@ -169,6 +169,9 @@
       ],
       "nos": [
         "NOS"
+      ],
+      "fnac": [
+        "FNAC"
       ]
     },
     "brandAllowedDomains": {
@@ -193,6 +196,9 @@
       "mbway": [
         "mbway.pt",
         "sibs.pt"
+      ],
+      "fnac": [
+        "fnac.pt"
       ]
     }
   },

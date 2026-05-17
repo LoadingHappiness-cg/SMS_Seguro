@@ -11,15 +11,28 @@ class RiskEngineTest {
         RuleSet(
             version = 3,
             publishedAt = "2026-02-27T00:00:00Z",
-            scoring = ScoringConfig(ScoreThresholds(medium = 40, high = 70)),
+            scoring =
+                ScoringConfig(
+                    thresholds = ScoreThresholds(medium = 40, high = 70),
+                    keywordWeights =
+                        KeywordWeights(
+                            urgency = 15,
+                            threat = 20,
+                            payment = 10,
+                            dataRequest = 35,
+                            publicServices = 10,
+                            delivery = 10,
+                            banking = 15,
+                        ),
+                ),
             keywordGroups =
                 KeywordGroups(
                     urgency = listOf("urgente", "imediato", "48h"),
                     threat = listOf("penhora", "bloqueio"),
-                    payment = listOf("pagamento", "taxa"),
+                    payment = listOf("pagamento", "taxa", "regularizar"),
                     dataRequest = listOf("codigo", "pin", "mbway"),
                     publicServices = listOf("financas", "seguranca social", "sns"),
-                    delivery = listOf("ctt", "dhl", "ups", "dpd", "entrega"),
+                    delivery = listOf("ctt", "dhl", "ups", "dpd", "entrega", "encomenda"),
                     banking = listOf("cgd", "bpi", "banco", "conta"),
                 ),
             messageRules =
@@ -94,6 +107,7 @@ class RiskEngineTest {
                         mapOf(
                             "ctt" to listOf("ctt.pt"),
                             "financas" to listOf("portaldasfinancas.gov.pt", "gov.pt"),
+                            "fnac" to listOf("fnac.pt"),
                         ),
                 ),
             multibanco =
@@ -356,6 +370,51 @@ class RiskEngineTest {
 
         assertFalse(result.reasons.contains("bank_withdrawal_callback_scam"))
         assertTrue(result.level == RiskLevel.MEDIUM || result.level == RiskLevel.HIGH)
+    }
+
+    @Test
+    fun fnacOrderMessageWithMismatchedDomain_isHighRisk() {
+        val engine = RiskEngine(ruleSet)
+
+        val result =
+            engine.analyze(
+                messageText = "Veja os detalhes da sua encomenda FNAC em: https://example.com/info?id=2",
+                urls = listOf("https://example.com/info?id=2"),
+                multibancoData = null,
+            )
+
+        assertEquals(RiskLevel.HIGH, result.level)
+        assertTrue(result.reasons.contains("correlation_brand_url_mismatch"))
+    }
+
+    @Test
+    fun legitimateFnacOrderMessageWithCoherentDomain_staysLowRisk() {
+        val engine = RiskEngine(ruleSet)
+
+        val result =
+            engine.analyze(
+                messageText = "Veja os detalhes da sua encomenda FNAC em: https://www.fnac.pt/info?id=2",
+                urls = listOf("https://www.fnac.pt/info?id=2"),
+                multibancoData = null,
+            )
+
+        assertEquals(RiskLevel.LOW, result.level)
+        assertFalse(result.reasons.contains("correlation_brand_url_mismatch"))
+    }
+
+    @Test
+    fun suspiciousXyzLoginWithUrgency_isHighRisk() {
+        val engine = RiskEngine(ruleSet)
+
+        val result =
+            engine.analyze(
+                messageText = "URGENTE: o seu acesso sera suspenso hoje. Regularize ja em: https://apoio-seguro.xyz/login",
+                urls = listOf("https://apoio-seguro.xyz/login"),
+                multibancoData = null,
+            )
+
+        assertEquals(RiskLevel.HIGH, result.level)
+        assertTrue(result.reasons.contains("url_suspicious_tld"))
     }
 
     private fun ruleSetWithRegexRule(regexAny: List<String>): RuleSet =
