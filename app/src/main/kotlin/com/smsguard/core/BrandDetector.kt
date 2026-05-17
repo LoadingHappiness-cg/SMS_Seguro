@@ -23,7 +23,7 @@ object BrandDetector {
         matchedGroups: Set<String>,
     ): String? {
         explicitBrandKeywords.forEach { (brand, keywords) ->
-            if (keywords.any { normalizedMessage.contains(it) }) {
+            if (keywords.any { keyword -> containsWholeKeyword(normalizedMessage, keyword) }) {
                 return brand
             }
         }
@@ -34,5 +34,13 @@ object BrandDetector {
             "banking" in matchedGroups -> "banking"
             else -> null
         }
+    }
+
+    private fun containsWholeKeyword(
+        normalizedMessage: String,
+        keyword: String,
+    ): Boolean {
+        val escapedKeyword = Regex.escape(keyword)
+        return Regex("""\b$escapedKeyword\b""").containsMatchIn(normalizedMessage)
     }
 }

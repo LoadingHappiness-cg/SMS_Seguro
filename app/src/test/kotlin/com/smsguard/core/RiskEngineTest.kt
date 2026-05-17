@@ -221,6 +221,29 @@ class RiskEngineTest {
     }
 
     @Test
+    fun promotionalAteDatePhrase_doesNotTriggerUrgencyByDefault() {
+        val promoRuleSet =
+            ruleSet.copy(
+                keywordGroups =
+                    ruleSet.keywordGroups.copy(
+                        urgency = listOf("urgente", "imediato", "48h", "ate"),
+                    ),
+            )
+        val engine = RiskEngine(promoRuleSet)
+
+        val result =
+            engine.analyze(
+                messageText = "Na RP 3=2! Na compra 3 produtos diferentes o mais barato e GRATIS! Em Eletrod. e TV ate 18/5. CC https://s.radiopopular.pt/W2V1d0e SAIR https://w.ems.to/icBHDQ",
+                urls = listOf("https://s.radiopopular.pt/W2V1d0e", "https://w.ems.to/icBHDQ"),
+                multibancoData = null,
+            )
+
+        assertFalse(result.reasons.contains("keyword_urgency"))
+        assertEquals(10, result.score)
+        assertEquals(RiskLevel.LOW, result.level)
+    }
+
+    @Test
     fun dataRequestOnly_isNeverLow() {
         val engine = RiskEngine(ruleSet)
 

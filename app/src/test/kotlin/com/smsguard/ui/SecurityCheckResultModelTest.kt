@@ -10,6 +10,28 @@ import org.junit.Test
 class SecurityCheckResultModelTest {
 
     @Test
+    fun missingRiskLevelExtras_defaultsToLowInsteadOfMedium() {
+        assertEquals(
+            RiskLevel.LOW,
+            resolveAlertRiskLevel(
+                levelExtra = null,
+                riskLevelExtra = null,
+            ),
+        )
+    }
+
+    @Test
+    fun validLowRiskLevelExtra_remainsLow() {
+        assertEquals(
+            RiskLevel.LOW,
+            resolveAlertRiskLevel(
+                levelExtra = RiskLevel.LOW.name,
+                riskLevelExtra = null,
+            ),
+        )
+    }
+
+    @Test
     fun lowRisk_usesCalmSemanticsAndOkAction() {
         val state = securityCheckContentFor(RiskLevel.LOW)
 

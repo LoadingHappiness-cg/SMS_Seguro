@@ -106,13 +106,10 @@ class AlertActivity : ComponentActivity() {
                 ?: 0
 
         val riskLevel =
-            runCatching {
-                RiskLevel.valueOf(
-                    intent.getStringExtra("level")
-                        ?: intent.getStringExtra("risk_level")
-                        ?: RiskLevel.MEDIUM.name,
-                )
-            }.getOrDefault(RiskLevel.MEDIUM)
+            resolveAlertRiskLevel(
+                levelExtra = intent.getStringExtra("level"),
+                riskLevelExtra = intent.getStringExtra("risk_level"),
+            )
 
         val reasons =
             intent.getStringArrayListExtra("reasons")?.toList()
@@ -288,6 +285,21 @@ class AlertActivity : ComponentActivity() {
             Intent.createChooser(intent, getString(R.string.help_share_chooser_title)),
         )
     }
+}
+
+internal fun resolveAlertRiskLevel(
+    levelExtra: String?,
+    riskLevelExtra: String?,
+): RiskLevel {
+    val rawLevel =
+        levelExtra
+            ?.takeIf { it.isNotBlank() }
+            ?: riskLevelExtra?.takeIf { it.isNotBlank() }
+            ?: return RiskLevel.LOW
+
+    return runCatching {
+        RiskLevel.valueOf(rawLevel)
+    }.getOrDefault(RiskLevel.LOW)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -244,17 +244,27 @@ class RiskEngine(private val ruleSet: RuleSet) {
     private fun detectKeywordGroups(normalizedMessage: String): Set<String> {
         val groups = linkedSetOf<String>()
 
-        fun matchAny(values: List<String>): Boolean =
-            values.any { keyword -> normalizedMessage.contains(TextNormalizer.normalize(keyword)) }
+        fun matchAny(group: String, values: List<String>): Boolean =
+            values.any { keyword ->
+                val normalizedKeyword = TextNormalizer.normalize(keyword)
+                when {
+                    group == "urgency" && normalizedKeyword == "ate" ->
+                        normalizedMessage.contains(normalizedKeyword) && !containsPromotionalAteDatePhrase(normalizedMessage)
+                    else -> normalizedMessage.contains(normalizedKeyword)
+                }
+            }
 
-        if (matchAny(ruleSet.keywordGroups.urgency)) groups.add("urgency")
-        if (matchAny(ruleSet.keywordGroups.threat)) groups.add("threat")
-        if (matchAny(ruleSet.keywordGroups.payment)) groups.add("payment")
-        if (matchAny(ruleSet.keywordGroups.dataRequest)) groups.add("dataRequest")
-        if (matchAny(ruleSet.keywordGroups.publicServices)) groups.add("publicServices")
-        if (matchAny(ruleSet.keywordGroups.delivery)) groups.add("delivery")
-        if (matchAny(ruleSet.keywordGroups.banking)) groups.add("banking")
+        if (matchAny("urgency", ruleSet.keywordGroups.urgency)) groups.add("urgency")
+        if (matchAny("threat", ruleSet.keywordGroups.threat)) groups.add("threat")
+        if (matchAny("payment", ruleSet.keywordGroups.payment)) groups.add("payment")
+        if (matchAny("dataRequest", ruleSet.keywordGroups.dataRequest)) groups.add("dataRequest")
+        if (matchAny("publicServices", ruleSet.keywordGroups.publicServices)) groups.add("publicServices")
+        if (matchAny("delivery", ruleSet.keywordGroups.delivery)) groups.add("delivery")
+        if (matchAny("banking", ruleSet.keywordGroups.banking)) groups.add("banking")
 
         return groups
     }
+
+    private fun containsPromotionalAteDatePhrase(normalizedMessage: String): Boolean =
+        Regex("""\bate\s+\d{1,2}/\d{1,2}\b""").containsMatchIn(normalizedMessage)
 }
