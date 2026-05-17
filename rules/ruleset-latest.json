@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 9,
   "publishedAt": "2026-04-03T10:30:00Z",
   "scoring": {
     "thresholds": {
@@ -209,6 +209,14 @@
       "ctt": [
         "ctt.pt"
       ],
+      "dhl": [
+        "dhl.com",
+        "dhl.pt"
+      ],
+      "dpd": [
+        "dpd.pt",
+        "dpd.com"
+      ],
       "financas": [
         "portaldasfinancas.gov.pt",
         "at.gov.pt",
@@ -227,6 +235,9 @@
       "mbway": [
         "mbway.pt",
         "sibs.pt"
+      ],
+      "ups": [
+        "ups.com"
       ],
       "fnac": [
         "fnac.pt"

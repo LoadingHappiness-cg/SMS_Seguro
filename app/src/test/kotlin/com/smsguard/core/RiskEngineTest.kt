@@ -19,7 +19,7 @@ class RiskEngineTest {
                     payment = listOf("pagamento", "taxa"),
                     dataRequest = listOf("codigo", "pin", "mbway"),
                     publicServices = listOf("financas", "seguranca social", "sns"),
-                    delivery = listOf("ctt", "dhl", "ups", "dpd", "entrega"),
+                    delivery = listOf("ctt", "dhl", "ups", "dpd", "entrega", "encomenda"),
                     banking = listOf("cgd", "bpi", "banco", "conta"),
                 ),
             messageRules =
@@ -93,6 +93,10 @@ class RiskEngineTest {
                     brandAllowedDomains =
                         mapOf(
                             "ctt" to listOf("ctt.pt"),
+                            "dhl" to listOf("dhl.com", "dhl.pt"),
+                            "ups" to listOf("ups.com"),
+                            "dpd" to listOf("dpd.pt", "dpd.com"),
+                            "fnac" to listOf("fnac.pt"),
                             "financas" to listOf("portaldasfinancas.gov.pt", "gov.pt"),
                         ),
                 ),
@@ -333,6 +337,63 @@ class RiskEngineTest {
 
         assertFalse(result.reasons.contains("bank_withdrawal_callback_scam"))
         assertTrue(result.level == RiskLevel.MEDIUM || result.level == RiskLevel.HIGH)
+    }
+
+    @Test
+    fun fnacCoherentDomain_staysLowRisk() {
+        val engine = RiskEngine(ruleSet)
+
+        val result =
+            engine.analyze(
+                messageText = "Veja os detalhes da sua encomenda FNAC em: https://www.fnac.pt/info?id=2",
+                urls = listOf("https://www.fnac.pt/info?id=2"),
+                multibancoData = null,
+            )
+
+        assertEquals(RiskLevel.LOW, result.level)
+        assertFalse(result.reasons.contains("correlation_brand_url_mismatch"))
+    }
+
+    @Test
+    fun dhlMismatchedDomain_triggersBrandUrlMismatch() {
+        val engine = RiskEngine(ruleSet)
+
+        val result =
+            engine.analyze(
+                messageText = "DHL: siga a sua entrega em https://example.com/track",
+                urls = listOf("https://example.com/track"),
+                multibancoData = null,
+            )
+
+        assertTrue(result.reasons.contains("correlation_brand_url_mismatch"))
+    }
+
+    @Test
+    fun upsMismatchedDomain_triggersBrandUrlMismatch() {
+        val engine = RiskEngine(ruleSet)
+
+        val result =
+            engine.analyze(
+                messageText = "UPS: veja a sua encomenda em https://example.com/track",
+                urls = listOf("https://example.com/track"),
+                multibancoData = null,
+            )
+
+        assertTrue(result.reasons.contains("correlation_brand_url_mismatch"))
+    }
+
+    @Test
+    fun dpdMismatchedDomain_triggersBrandUrlMismatch() {
+        val engine = RiskEngine(ruleSet)
+
+        val result =
+            engine.analyze(
+                messageText = "DPD: acompanhe a sua entrega em https://example.com/track",
+                urls = listOf("https://example.com/track"),
+                multibancoData = null,
+            )
+
+        assertTrue(result.reasons.contains("correlation_brand_url_mismatch"))
     }
 
     private fun ruleSetWithRegexRule(regexAny: List<String>): RuleSet =

@@ -19,6 +19,9 @@ class PublishedRulesetTest {
         val ruleSet = RuleLoader.json.decodeFromString(RuleSet.serializer(), file.readText())
 
         assertEquals(listOf("fnac.pt"), ruleSet.correlation.brandAllowedDomains["fnac"])
-        assertEquals(8, ruleSet.version)
+        assertEquals(listOf("dhl.com", "dhl.pt"), ruleSet.correlation.brandAllowedDomains["dhl"])
+        assertEquals(listOf("ups.com"), ruleSet.correlation.brandAllowedDomains["ups"])
+        assertEquals(listOf("dpd.pt", "dpd.com"), ruleSet.correlation.brandAllowedDomains["dpd"])
+        assertEquals(9, ruleSet.version)
     }
 }

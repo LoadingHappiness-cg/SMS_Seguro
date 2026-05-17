@@ -169,11 +169,22 @@
       ],
       "nos": [
         "NOS"
+      ],
+      "fnac": [
+        "FNAC"
       ]
     },
     "brandAllowedDomains": {
       "ctt": [
         "ctt.pt"
+      ],
+      "dhl": [
+        "dhl.com",
+        "dhl.pt"
+      ],
+      "dpd": [
+        "dpd.pt",
+        "dpd.com"
       ],
       "financas": [
         "portaldasfinancas.gov.pt",
@@ -193,6 +204,12 @@
       "mbway": [
         "mbway.pt",
         "sibs.pt"
+      ],
+      "ups": [
+        "ups.com"
+      ],
+      "fnac": [
+        "fnac.pt"
       ]
     }
   },

@@ -15,6 +15,7 @@ object BrandDetector {
             "meo" to listOf("meo"),
             "vodafone" to listOf("vodafone"),
             "nos" to listOf("nos"),
+            "fnac" to listOf("fnac"),
             "mbway" to listOf("mbway"),
         )
 
