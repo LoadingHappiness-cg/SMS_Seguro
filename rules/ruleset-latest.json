@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "publishedAt": "2026-04-03T10:30:00Z",
   "scoring": {
     "thresholds": {
@@ -200,6 +200,9 @@
       ],
       "nos": [
         "NOS"
+      ],
+      "fnac": [
+        "FNAC"
       ]
     },
     "brandAllowedDomains": {
@@ -224,6 +227,9 @@
       "mbway": [
         "mbway.pt",
         "sibs.pt"
+      ],
+      "fnac": [
+        "fnac.pt"
       ]
     }
   },
